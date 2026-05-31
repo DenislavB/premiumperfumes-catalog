@@ -12,18 +12,8 @@ export default async function AdminPage() {
     prisma.purchaseRequest.findMany({ orderBy: { createdAt: "desc" } }),
   ]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const serializedProducts = (products as any[]).map((p) => ({
-    ...p,
-    createdAt: p.createdAt.toISOString(),
-    updatedAt: p.updatedAt.toISOString(),
-  }));
+  // JSON round-trip serializes all Date objects to strings safely
+  const data = JSON.parse(JSON.stringify({ products, requests }));
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const serializedRequests = (requests as any[]).map((r) => ({
-    ...r,
-    createdAt: r.createdAt.toISOString(),
-  }));
-
-  return <AdminDashboardClient products={serializedProducts} requests={serializedRequests} />;
+  return <AdminDashboardClient products={data.products} requests={data.requests} />;
 }
