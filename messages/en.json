@@ -1,0 +1,58 @@
+{
+  "nav": {
+    "catalog": "Catalog",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "hero": {
+    "tagline": "Luxury Fragrances from Dubai",
+    "subtitle": "Discover the art of Arabian perfumery — rare oud, precious musks, and timeless elegance.",
+    "cta": "Explore Collection"
+  },
+  "catalog": {
+    "title": "Our Collection",
+    "all": "All",
+    "men": "Men",
+    "women": "Women",
+    "unisex": "Unisex",
+    "featured": "Featured",
+    "promotions": "Promotions",
+    "outOfStock": "Out of stock",
+    "requestBtn": "Request to Buy",
+    "noProducts": "No products found in this category."
+  },
+  "product": {
+    "volume": "Volume",
+    "brand": "Brand",
+    "gender": "For",
+    "price": "Price",
+    "promotion": "Special Offer",
+    "save": "Save {pct}%",
+    "quantity": "Available",
+    "units": "units",
+    "requestBtn": "Send Purchase Request",
+    "description": "Description",
+    "backBtn": "Back to Catalog"
+  },
+  "request": {
+    "title": "Purchase Request",
+    "subtitle": "Fill in your details and we will contact you to confirm your order.",
+    "name": "Full Name",
+    "email": "Email",
+    "phone": "Phone (optional)",
+    "message": "Additional notes (optional)",
+    "submit": "Send Request",
+    "success": "Thank you! We will contact you shortly.",
+    "error": "Something went wrong. Please try again.",
+    "items": "Requested Items"
+  },
+  "footer": {
+    "rights": "All rights reserved.",
+    "catalog": "Catalog",
+    "contact": "Contact us"
+  },
+  "about": {
+    "title": "About Premium Perfumes",
+    "text": "We bring the finest fragrances from the heart of Dubai to your door. Each bottle tells a story of craftsmanship, heritage, and luxury."
+  }
+}
