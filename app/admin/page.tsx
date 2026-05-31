@@ -12,13 +12,15 @@ export default async function AdminPage() {
     prisma.purchaseRequest.findMany({ orderBy: { createdAt: "desc" } }),
   ]);
 
-  const serializedProducts = products.map((p: typeof products[number]) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const serializedProducts = (products as any[]).map((p) => ({
     ...p,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   }));
 
-  const serializedRequests = requests.map((r: typeof requests[number]) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const serializedRequests = (requests as any[]).map((r) => ({
     ...r,
     createdAt: r.createdAt.toISOString(),
   }));
