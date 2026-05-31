@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import AdminDashboardClient from "./AdminDashboardClient";
-import type { Product as PrismaProduct, PurchaseRequest as PrismaRequest } from "@prisma/client";
 
 export default async function AdminPage() {
   const session = await getSession();
@@ -13,14 +12,13 @@ export default async function AdminPage() {
     prisma.purchaseRequest.findMany({ orderBy: { createdAt: "desc" } }),
   ]);
 
-  // Serialize dates to strings for client components
-  const serializedProducts = products.map((p: PrismaProduct) => ({
+  const serializedProducts = products.map((p: typeof products[number]) => ({
     ...p,
     createdAt: p.createdAt.toISOString(),
     updatedAt: p.updatedAt.toISOString(),
   }));
 
-  const serializedRequests = requests.map((r: PrismaRequest) => ({
+  const serializedRequests = requests.map((r: typeof requests[number]) => ({
     ...r,
     createdAt: r.createdAt.toISOString(),
   }));
