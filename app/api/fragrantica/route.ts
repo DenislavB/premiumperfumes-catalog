@@ -1,6 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 
+// Known brand website patterns for popular Arabic/luxury perfume brands
+const BRAND_SITES: Record<string, string> = {
+  "lattafa": "lattafa.com",
+  "al haramain": "alharamain.com",
+  "ajmal": "ajmalperfume.com",
+  "swiss arabian": "swissarabian.com",
+  "rasasi": "rasasi.com",
+  "armaf": "armaf.com",
+  "fragrance world": "fragranceworld.net",
+  "afnan": "afnanperfumes.com",
+  "ard al zaafaran": "ardalzaafaran.com",
+  "zimaya": "zimaya.com",
+  "maison alhambra": "maisonalhambra.com",
+};
+
+async function scrapeImagesFromUrl(url: string): Promise<string[]> {
+  const images: string[] = [];
+  try {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return images;
+
+    const data = await res.json();
+    const html: string = data.contents || "";
+
+    // Extract og:image first (usually the main product image)
+    const ogImg = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/);
+    if (ogImg && ogImg[1].startsWith("http")) images.push(ogImg[1]);
+
+    // Extract all large product images
+    const allImgs = [...html.matchAll(/src="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp))"/gi)];
+    for (const m of allImgs) {
+      const src = m[1];
+      if (
+        src &&
+        !src.includes("logo") &&
+        !src.includes("icon") &&
+        !src.includes("banner") &&
+        !src.includes("avatar") &&
+        !src.includes("thumbnail") &&
+        !src.includes("payment") &&
+        !src.includes("flag") &&
+        !images.includes(src) &&
+        images.length < 6
+      ) {
+        images.push(src);
+      }
+    }
+  } catch {
+    // Scrape failed
+  }
+  return images;
+}
+
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session.isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -39,6 +93,9 @@ Same notes translated to Bulgarian, separated by commas. Example: Българс
 
 GENDER: Men | Women | Unisex (pick one)
 
+OFFICIAL PRODUCT URL:
+Find the exact URL of this perfume on the official brand website or on fragrantica.com or parfumo.com. Return only the full URL, nothing else. If you don't know the exact URL, return an empty string "".
+
 ---
 
 Respond ONLY with valid JSON, no markdown, no explanation:
@@ -47,8 +104,16 @@ Respond ONLY with valid JSON, no markdown, no explanation:
   "descriptionBg": "...",
   "notes": "note1, note2, note3",
   "notesBg": "нотка1, нотка2, нотка3",
-  "gender": "Men|Women|Unisex"
+  "gender": "Men|Women|Unisex",
+  "productUrl": "https://..."
 }`;
+
+  let description = "";
+  let descriptionBg = "";
+  let notes = "";
+  let notesBg = "";
+  let gender = "Unisex";
+  let productUrl = "";
 
   try {
     const xaiRes = await fetch("https://api.x.ai/v1/chat/completions", {
@@ -61,79 +126,87 @@ Respond ONLY with valid JSON, no markdown, no explanation:
         model: "grok-3-mini",
         messages: [{ role: "user", content: prompt }],
         temperature: 0.8,
-        max_tokens: 1200,
+        max_tokens: 1400,
       }),
       signal: AbortSignal.timeout(20000),
     });
 
-    if (!xaiRes.ok) {
-      const err = await xaiRes.text();
-      throw new Error(`xAI error: ${err}`);
-    }
-
-    const xaiData = await xaiRes.json();
-    const text = xaiData?.choices?.[0]?.message?.content || "";
-
-    // Extract JSON — strip markdown code blocks if present
-    const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("Не е намерен JSON в отговора");
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    // Search Pexels for perfume images
-    const images: string[] = [];
-    if (process.env.PEXELS_API_KEY) {
-      try {
-        const query = `${brand} ${name} perfume bottle`;
-        const pexelsRes = await fetch(
-          `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=6&orientation=portrait`,
-          {
-            headers: { Authorization: process.env.PEXELS_API_KEY },
-            signal: AbortSignal.timeout(8000),
-          }
-        );
-        if (pexelsRes.ok) {
-          const pexelsData = await pexelsRes.json();
-          for (const photo of pexelsData.photos || []) {
-            if (photo.src?.large && images.length < 5) {
-              images.push(photo.src.large);
-            }
-          }
-        }
-        // If no brand-specific results, search generic luxury perfume
-        if (images.length === 0) {
-          const fallbackRes = await fetch(
-            `https://api.pexels.com/v1/search?query=luxury+perfume+bottle&per_page=6&orientation=portrait`,
-            {
-              headers: { Authorization: process.env.PEXELS_API_KEY },
-              signal: AbortSignal.timeout(8000),
-            }
-          );
-          if (fallbackRes.ok) {
-            const fallbackData = await fallbackRes.json();
-            for (const photo of fallbackData.photos || []) {
-              if (photo.src?.large && images.length < 5) {
-                images.push(photo.src.large);
-              }
-            }
-          }
-        }
-      } catch {
-        // Pexels failed, continue without images
+    if (xaiRes.ok) {
+      const xaiData = await xaiRes.json();
+      const text = xaiData?.choices?.[0]?.message?.content || "";
+      const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        description = parsed.descriptionEn || "";
+        descriptionBg = parsed.descriptionBg || "";
+        notes = parsed.notes || "";
+        notesBg = parsed.notesBg || "";
+        gender = parsed.gender || "Unisex";
+        productUrl = parsed.productUrl || "";
       }
     }
-
-    return NextResponse.json({
-      description: parsed.descriptionEn || "",
-      descriptionBg: parsed.descriptionBg || "",
-      notes: parsed.notes || "",
-      notesBg: parsed.notesBg || "",
-      gender: parsed.gender || "Unisex",
-      images,
-    });
-
-  } catch (err) {
-    return NextResponse.json({ error: `Грешка: ${String(err)}` }, { status: 500 });
+  } catch {
+    // Grok failed
   }
+
+  // Try to scrape images from the official product URL
+  let images: string[] = [];
+
+  if (productUrl && productUrl.startsWith("http")) {
+    images = await scrapeImagesFromUrl(productUrl);
+  }
+
+  // Fallback: try the known brand website
+  if (images.length === 0) {
+    const brandKey = brand.toLowerCase();
+    const brandSite = Object.entries(BRAND_SITES).find(([key]) => brandKey.includes(key))?.[1];
+    if (brandSite) {
+      const searchUrl = `https://${brandSite}/search?q=${encodeURIComponent(name)}`;
+      images = await scrapeImagesFromUrl(searchUrl);
+    }
+  }
+
+  // Fallback: try Fragrantica search
+  if (images.length === 0) {
+    try {
+      const fragUrl = `https://www.fragrantica.com/search/?query=${encodeURIComponent(`${brand} ${name}`)}`;
+      const fragImages = await scrapeImagesFromUrl(fragUrl);
+      images = fragImages;
+    } catch {
+      // ignore
+    }
+  }
+
+  // Final fallback: Pexels
+  if (images.length === 0 && process.env.PEXELS_API_KEY) {
+    try {
+      const query = `${brand} ${name} perfume bottle`;
+      const pexelsRes = await fetch(
+        `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=5&orientation=portrait`,
+        {
+          headers: { Authorization: process.env.PEXELS_API_KEY },
+          signal: AbortSignal.timeout(8000),
+        }
+      );
+      if (pexelsRes.ok) {
+        const pexelsData = await pexelsRes.json();
+        for (const photo of pexelsData.photos || []) {
+          if (photo.src?.large && images.length < 5) images.push(photo.src.large);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return NextResponse.json({
+    description,
+    descriptionBg,
+    notes,
+    notesBg,
+    gender,
+    images: images.slice(0, 5),
+    sourceUrl: productUrl,
+  });
 }
