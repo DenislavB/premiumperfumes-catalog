@@ -63,6 +63,7 @@ export default function ProductFormModal({
   const [fragUrl, setFragUrl] = useState("");
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState("");
+  const [suggestedImages, setSuggestedImages] = useState<string[]>([]);
 
   const f = (key: keyof typeof form, val: unknown) =>
     setForm(prev => ({ ...prev, [key]: val }));
@@ -81,21 +82,19 @@ export default function ProductFormModal({
       if (!res.ok) throw new Error(data.error || "Failed to import");
 
       // Auto-fill fields
-      if (data.name) f("name", data.name);
-      if (data.brand) f("brand", data.brand);
-      if (data.description) f("description", data.description);
-      if (data.gender) f("gender", data.gender);
-      if (data.image) {
-        setForm(prev => ({
-          ...prev,
-          ...(data.name && { name: data.name }),
-          ...(data.brand && { brand: data.brand }),
-          ...(data.description && { description: data.description }),
-          ...(data.gender && { gender: data.gender }),
-          images: data.image ? [...prev.images, data.image].filter((v, i, a) => a.indexOf(v) === i) : prev.images,
-        }));
+      setForm(prev => ({
+        ...prev,
+        ...(data.name && { name: data.name }),
+        ...(data.brand && { brand: data.brand }),
+        ...(data.description && { description: data.description }),
+        ...(data.gender && { gender: data.gender }),
+      }));
+      if (data.images && data.images.length > 0) {
+        setSuggestedImages(data.images);
+        setImportMsg(`✓ Imported! Found ${data.images.length} photos below — click to add them.`);
+      } else {
+        setImportMsg("✓ Imported! No photos found, add them manually.");
       }
-      setImportMsg("✓ Imported successfully! Review and fill in the remaining fields.");
     } catch (err) {
       setImportMsg(`✗ ${String(err)}`);
     }
@@ -176,8 +175,45 @@ export default function ProductFormModal({
               </p>
             )}
             <p className="text-[#F5ECD7]/30 text-xs mt-2">
-              Paste a Fragrantica product page URL to auto-fill name, brand, description, gender and image.
+              Paste a Fragrantica product page URL to auto-fill name, brand, description, gender and photos.
             </p>
+
+            {/* Suggested images */}
+            {suggestedImages.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs text-[#F5ECD7]/50 tracking-widest uppercase mb-2">
+                  Click a photo to add it — click again to remove
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {suggestedImages.map((imgUrl, i) => {
+                    const isSelected = (form.images as string[]).includes(imgUrl);
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            f("images", (form.images as string[]).filter(u => u !== imgUrl));
+                          } else {
+                            f("images", [...(form.images as string[]), imgUrl]);
+                          }
+                        }}
+                        className={`relative w-20 h-24 border-2 overflow-hidden transition-all ${
+                          isSelected ? "border-[#C9A84C]" : "border-[#2A2418] opacity-60 hover:opacity-100"
+                        }`}
+                      >
+                        <img src={imgUrl} alt="" className="w-full h-full object-cover" />
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-[#C9A84C]/20 flex items-center justify-center">
+                            <span className="text-[#C9A84C] text-xl font-bold">✓</span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
