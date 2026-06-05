@@ -7,97 +7,74 @@ export async function POST(req: NextRequest) {
 
   const { name, brand } = await req.json();
   if (!name || !brand) {
-    return NextResponse.json({ error: "Name and brand are required" }, { status: 400 });
+    return NextResponse.json({ error: "Необходими са наименование и производител" }, { status: 400 });
   }
 
-  let description = "";
-  let gender = "Unisex";
-  const images: string[] = [];
-  let notes: string[] = [];
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (!geminiKey) {
+    return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
+  }
 
-  // Step 1: Search Fragrantica for the product
+  // Use Gemini to get description + image URLs with Google Search grounding
+  const prompt = `You are a luxury perfume expert. For the perfume "${name}" by "${brand}", provide:
+
+1. A rich, elegant English description (3-4 sentences) suitable for a luxury perfume catalog. Mention the fragrance character, key notes if known, and who it's for.
+2. Find 5 real image URLs of this perfume bottle from the web (from brand websites, fragrantica.com, parfumo.com, or other perfume sites). Only include direct image URLs ending in .jpg, .jpeg, .png or .webp.
+3. The gender category: Men, Women, or Unisex.
+
+Respond in this exact JSON format:
+{
+  "description": "...",
+  "gender": "Men|Women|Unisex",
+  "images": ["url1", "url2", "url3", "url4", "url5"]
+}`;
+
   try {
-    const searchQuery = `${brand} ${name}`;
-    const searchUrl = `https://www.fragrantica.com/search/?query=${encodeURIComponent(searchQuery)}`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(searchUrl)}`;
-    const searchRes = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
-
-    if (searchRes.ok) {
-      const searchData = await searchRes.json();
-      const searchHtml: string = searchData.contents || "";
-
-      // Find first perfume result link
-      const linkMatch = searchHtml.match(/href="(https:\/\/www\.fragrantica\.com\/perfume\/[^"]+\.html)"/);
-      if (linkMatch) {
-        const perfumeUrl = linkMatch[1];
-
-        // Fetch the perfume page
-        const perfumeProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(perfumeUrl)}`;
-        const perfumeRes = await fetch(perfumeProxy, { signal: AbortSignal.timeout(8000) });
-
-        if (perfumeRes.ok) {
-          const perfumeData = await perfumeRes.json();
-          const html: string = perfumeData.contents || "";
-
-          // Description
-          const descMatch = html.match(/itemprop="description"[^>]*>([\s\S]*?)<\/p>/) ||
-                            html.match(/<p[^>]*class="[^"]*description[^"]*"[^>]*>([\s\S]*?)<\/p>/);
-          if (descMatch) {
-            description = descMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-          }
-
-          // Gender
-          if (/for women and men|unisex|shared/i.test(html)) gender = "Unisex";
-          else if (/for women|feminine/i.test(html)) gender = "Women";
-          else if (/for men|masculine/i.test(html)) gender = "Men";
-
-          // Notes
-          const notesMatches = [...html.matchAll(/class="[^"]*note-name[^"]*"[^>]*>([^<]+)</g)];
-          notes = notesMatches.map((m) => m[1].trim()).filter(Boolean).slice(0, 10);
-          if (notes.length > 0 && description) {
-            description += `\n\nНотки на аромата: ${notes.join(", ")}.`;
-          }
-
-          // Images from page
-          const allImgs = [...html.matchAll(/<img[^>]+src="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp))[^"]*"/gi)];
-          for (const m of allImgs) {
-            const src = m[1];
-            if (src && !src.includes("logo") && !src.includes("icon") && !images.includes(src) && images.length < 3) {
-              images.push(src);
-            }
-          }
-
-          // og:image
-          if (images.length === 0) {
-            const ogImg = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/);
-            if (ogImg) images.push(ogImg[1].trim());
-          }
-        }
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          tools: [{ google_search: {} }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024,
+          },
+        }),
+        signal: AbortSignal.timeout(15000),
       }
-    }
-  } catch {
-    // Fragrantica search failed, continue to Google
-  }
+    );
 
-  // Step 2: Google Image Search
-  if (process.env.GOOGLE_API_KEY && process.env.GOOGLE_CSE_ID) {
-    try {
-      const query = `${brand} ${name} perfume bottle`;
-      const googleUrl = `https://www.googleapis.com/customsearch/v1?key=${process.env.GOOGLE_API_KEY}&cx=${process.env.GOOGLE_CSE_ID}&q=${encodeURIComponent(query)}&searchType=image&num=8&imgSize=large&safe=active`;
-      const gRes = await fetch(googleUrl, { signal: AbortSignal.timeout(8000) });
-      if (gRes.ok) {
-        const gData = await gRes.json();
-        for (const item of (gData.items || [])) {
-          const imgUrl: string = item.link || "";
-          if (imgUrl && !imgUrl.endsWith(".svg") && !images.includes(imgUrl) && images.length < 6) {
-            images.push(imgUrl);
-          }
-        }
-      }
-    } catch {
-      // Google search failed
+    if (!geminiRes.ok) {
+      const err = await geminiRes.text();
+      throw new Error(`Gemini error: ${err}`);
     }
-  }
 
-  return NextResponse.json({ description, gender, images, notes });
+    const geminiData = await geminiRes.json();
+    const text = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("No JSON in Gemini response");
+
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    // Filter valid image URLs
+    const images = (parsed.images || []).filter(
+      (url: string) =>
+        typeof url === "string" &&
+        url.startsWith("http") &&
+        /\.(jpg|jpeg|png|webp)/i.test(url)
+    ).slice(0, 5);
+
+    return NextResponse.json({
+      description: parsed.description || "",
+      gender: parsed.gender || "Unisex",
+      images,
+    });
+  } catch (err) {
+    return NextResponse.json({ error: `Грешка: ${String(err)}` }, { status: 500 });
+  }
 }
