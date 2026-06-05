@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Plus, Minus, Download } from "lucide-react";
+import { X, Plus, Minus, Search } from "lucide-react";
 
 type Product = {
   id: string;
@@ -55,50 +55,48 @@ export default function ProductFormModal({
         }
       : empty
   );
+
   const [imgUrl, setImgUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Fragrantica import
-  const [fragUrl, setFragUrl] = useState("");
-  const [importing, setImporting] = useState(false);
-  const [importMsg, setImportMsg] = useState("");
+  // Auto-search state
+  const [searching, setSearching] = useState(false);
+  const [searchMsg, setSearchMsg] = useState("");
   const [suggestedImages, setSuggestedImages] = useState<string[]>([]);
 
   const f = (key: keyof typeof form, val: unknown) =>
     setForm(prev => ({ ...prev, [key]: val }));
 
-  const importFromFragrantica = async () => {
-    if (!fragUrl.trim()) return;
-    setImporting(true);
-    setImportMsg("");
+  const autoSearch = async () => {
+    if (!form.name || !form.brand) {
+      setSearchMsg("✗ Въведете първо Наименование и Производител.");
+      return;
+    }
+    setSearching(true);
+    setSearchMsg("");
+    setSuggestedImages([]);
     try {
       const res = await fetch("/api/fragrantica", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: fragUrl.trim() }),
+        body: JSON.stringify({ name: form.name, brand: form.brand }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to import");
+      if (!res.ok) throw new Error(data.error || "Грешка");
 
-      // Auto-fill fields
-      setForm(prev => ({
-        ...prev,
-        ...(data.name && { name: data.name }),
-        ...(data.brand && { brand: data.brand }),
-        ...(data.description && { description: data.description }),
-        ...(data.gender && { gender: data.gender }),
-      }));
-      if (data.images && data.images.length > 0) {
+      if (data.description) f("description", data.description);
+      if (data.gender) f("gender", data.gender);
+      if (data.images?.length > 0) {
         setSuggestedImages(data.images);
-        setImportMsg(`✓ Imported! Found ${data.images.length} photos below — click to add them.`);
+        setSearchMsg(`✓ Намерена информация! Изберете снимки по-долу.`);
       } else {
-        setImportMsg("✓ Imported! No photos found, add them manually.");
+        setSearchMsg("✓ Намерена информация! Не са намерени снимки — добавете ги ръчно.");
       }
     } catch (err) {
-      setImportMsg(`✗ ${String(err)}`);
+      setSearchMsg(`✗ ${String(err)}`);
     }
-    setImporting(false);
+    setSearching(false);
   };
 
   const addImage = () => {
@@ -107,8 +105,15 @@ export default function ProductFormModal({
       setImgUrl("");
     }
   };
-  const removeImage = (i: number) =>
-    f("images", (form.images as string[]).filter((_, idx) => idx !== i));
+
+  const toggleSuggestedImage = (imgSrc: string) => {
+    const current = form.images as string[];
+    if (current.includes(imgSrc)) {
+      f("images", current.filter(u => u !== imgSrc));
+    } else {
+      f("images", [...current, imgSrc]);
+    }
+  };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,9 +140,11 @@ export default function ProductFormModal({
     <div className="fixed inset-0 z-50 flex items-start justify-end">
       <div className="absolute inset-0 bg-[#0D0B08]/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-[#161410] border-l border-[#2A2418] w-full max-w-2xl h-full overflow-y-auto">
-        <div className="sticky top-0 bg-[#161410] border-b border-[#2A2418] px-6 py-4 flex items-center justify-between">
+
+        {/* Header */}
+        <div className="sticky top-0 bg-[#161410] border-b border-[#2A2418] px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-lg text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>
-            {isEdit ? "Edit Product" : "New Product"}
+            {isEdit ? "Редактиране на продукт" : "Нов продукт"}
           </h2>
           <button onClick={onClose} className="text-[#F5ECD7]/40 hover:text-[#C9A84C] transition-colors">
             <X size={18} />
@@ -145,67 +152,66 @@ export default function ProductFormModal({
         </div>
 
         <form onSubmit={save} className="p-6">
+          <div className="grid grid-cols-2 gap-4">
 
-          {/* Fragrantica Import */}
-          <div className="mb-6 p-4 border border-[#C9A84C]/20 bg-[#C9A84C]/5">
-            <p className="text-xs text-[#C9A84C] tracking-widest uppercase mb-3 flex items-center gap-2">
-              <Download size={12} />
-              Import from Fragrantica
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="url"
-                value={fragUrl}
-                onChange={e => setFragUrl(e.target.value)}
-                placeholder="https://www.fragrantica.com/perfume/..."
-                className="flex-1 px-3 py-2 text-sm rounded-none"
-              />
+            {/* Step 1: Basic info first */}
+            <div>
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Наименование (EN) *</label>
+              <input required value={form.name} onChange={e => f("name", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. Oud For Glory" />
+            </div>
+            <div>
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Наименование (BG) *</label>
+              <input required value={form.nameBg} onChange={e => f("nameBg", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. Уд за слава" />
+            </div>
+            <div>
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Производител *</label>
+              <input required value={form.brand} onChange={e => f("brand", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. Lattafa" />
+            </div>
+            <div>
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Обем *</label>
+              <input required value={form.volume} onChange={e => f("volume", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. 100ml" />
+            </div>
+
+            {/* Auto-search button */}
+            <div className="col-span-2">
               <button
                 type="button"
-                onClick={importFromFragrantica}
-                disabled={importing || !fragUrl.trim()}
-                className="bg-[#C9A84C] text-[#0D0B08] px-4 py-2 text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors disabled:opacity-40"
+                onClick={autoSearch}
+                disabled={searching || !form.name || !form.brand}
+                className="w-full flex items-center justify-center gap-2 py-3 border border-[#C9A84C]/50 text-[#C9A84C] text-xs font-bold tracking-widest uppercase hover:bg-[#C9A84C]/10 transition-colors disabled:opacity-40"
               >
-                {importing ? "..." : "Import"}
+                <Search size={14} />
+                {searching ? "Търсене..." : "Търси информация и снимки автоматично"}
               </button>
+              {searchMsg && (
+                <p className={`text-xs mt-2 ${searchMsg.startsWith("✓") ? "text-emerald-400" : "text-red-400"}`}>
+                  {searchMsg}
+                </p>
+              )}
             </div>
-            {importMsg && (
-              <p className={`text-xs mt-2 ${importMsg.startsWith("✓") ? "text-emerald-400" : "text-red-400"}`}>
-                {importMsg}
-              </p>
-            )}
-            <p className="text-[#F5ECD7]/30 text-xs mt-2">
-              Paste a Fragrantica product page URL to auto-fill name, brand, description, gender and photos.
-            </p>
 
             {/* Suggested images */}
             {suggestedImages.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs text-[#F5ECD7]/50 tracking-widest uppercase mb-2">
-                  Click a photo to add it — click again to remove
+              <div className="col-span-2 p-4 bg-[#0D0B08]/40 border border-[#2A2418]">
+                <p className="text-xs text-[#C9A84C] tracking-widest uppercase mb-3">
+                  Изберете снимки (кликнете за добавяне/премахване)
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {suggestedImages.map((imgUrl, i) => {
-                    const isSelected = (form.images as string[]).includes(imgUrl);
+                  {suggestedImages.map((src, i) => {
+                    const selected = (form.images as string[]).includes(src);
                     return (
                       <button
                         key={i}
                         type="button"
-                        onClick={() => {
-                          if (isSelected) {
-                            f("images", (form.images as string[]).filter(u => u !== imgUrl));
-                          } else {
-                            f("images", [...(form.images as string[]), imgUrl]);
-                          }
-                        }}
+                        onClick={() => toggleSuggestedImage(src)}
                         className={`relative w-20 h-24 border-2 overflow-hidden transition-all ${
-                          isSelected ? "border-[#C9A84C]" : "border-[#2A2418] opacity-60 hover:opacity-100"
+                          selected ? "border-[#C9A84C]" : "border-[#2A2418] opacity-50 hover:opacity-90"
                         }`}
                       >
-                        <img src={imgUrl} alt="" className="w-full h-full object-cover" />
-                        {isSelected && (
-                          <div className="absolute inset-0 bg-[#C9A84C]/20 flex items-center justify-center">
-                            <span className="text-[#C9A84C] text-xl font-bold">✓</span>
+                        <img src={src} alt="" className="w-full h-full object-cover" />
+                        {selected && (
+                          <div className="absolute inset-0 bg-[#C9A84C]/30 flex items-center justify-center">
+                            <span className="text-white text-xl font-bold drop-shadow">✓</span>
                           </div>
                         )}
                       </button>
@@ -214,68 +220,46 @@ export default function ProductFormModal({
                 </div>
               </div>
             )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* Names */}
-            <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Name (EN) *</label>
-              <input required value={form.name} onChange={e => f("name", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
-            </div>
-            <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Name (BG) *</label>
-              <input required value={form.nameBg} onChange={e => f("nameBg", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
-            </div>
-
-            {/* Brand / Volume */}
-            <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Brand *</label>
-              <input required value={form.brand} onChange={e => f("brand", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
-            </div>
-            <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Volume (e.g. 100ml) *</label>
-              <input required value={form.volume} onChange={e => f("volume", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
-            </div>
 
             {/* Gender */}
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Gender</label>
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">За</label>
               <select value={form.gender} onChange={e => f("gender", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none">
-                <option value="Men">Men</option>
-                <option value="Women">Women</option>
-                <option value="Unisex">Unisex</option>
+                <option value="Men">Мъже</option>
+                <option value="Women">Жени</option>
+                <option value="Unisex">Унисекс</option>
               </select>
             </div>
 
             {/* Quantity */}
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Quantity</label>
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Количество</label>
               <input type="number" min="0" value={form.quantity} onChange={e => f("quantity", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
             </div>
 
             {/* Prices */}
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Price (BGN) *</label>
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Цена (лв.) *</label>
               <input required type="number" step="0.01" min="0" value={form.price} onChange={e => f("price", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
             </div>
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Original Price (for strikethrough)</label>
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Стара цена (зачертана)</label>
               <input type="number" step="0.01" min="0" value={form.originalPrice} onChange={e => f("originalPrice", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
             </div>
 
             {/* Descriptions */}
             <div className="col-span-2">
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Description (EN)</label>
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Описание (EN)</label>
               <textarea rows={4} value={form.description} onChange={e => f("description", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none resize-none" />
             </div>
             <div className="col-span-2">
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Description (BG)</label>
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Описание (BG)</label>
               <textarea rows={4} value={form.descriptionBg} onChange={e => f("descriptionBg", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none resize-none" />
             </div>
 
-            {/* Images */}
+            {/* Manual image URL */}
             <div className="col-span-2">
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Images (URLs)</label>
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Добави снимка по URL</label>
               <div className="flex gap-2 mb-2">
                 <input
                   type="url"
@@ -296,7 +280,7 @@ export default function ProductFormModal({
                       <img src={url} alt="" className="w-full h-full object-cover" />
                       <button
                         type="button"
-                        onClick={() => removeImage(i)}
+                        onClick={() => f("images", (form.images as string[]).filter((_, idx) => idx !== i))}
                         className="absolute inset-0 bg-red-500/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Minus size={14} className="text-white" />
@@ -308,11 +292,11 @@ export default function ProductFormModal({
             </div>
 
             {/* Toggles */}
-            <div className="col-span-2 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="col-span-2 flex flex-wrap gap-6">
               {[
-                { key: "featured", label: "Featured" },
-                { key: "inPromotion", label: "In Promotion" },
-                { key: "available", label: "Available" },
+                { key: "featured", label: "Препоръчан" },
+                { key: "inPromotion", label: "В промоция" },
+                { key: "available", label: "Наличен" },
               ].map(({ key, label }) => (
                 <label key={key} className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -326,13 +310,8 @@ export default function ProductFormModal({
               ))}
               {form.inPromotion && (
                 <div>
-                  <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Discount %</label>
-                  <input
-                    type="number" min="1" max="99"
-                    value={form.discountPct}
-                    onChange={e => f("discountPct", e.target.value)}
-                    className="w-full px-3 py-2 text-sm rounded-none"
-                  />
+                  <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Отстъпка %</label>
+                  <input type="number" min="1" max="99" value={form.discountPct} onChange={e => f("discountPct", e.target.value)} className="w-24 px-3 py-2 text-sm rounded-none" />
                 </div>
               )}
             </div>
@@ -342,14 +321,10 @@ export default function ProductFormModal({
 
           <div className="flex gap-3 mt-8">
             <button type="button" onClick={onClose} className="flex-1 py-3 border border-[#2A2418] text-[#F5ECD7]/50 text-xs tracking-widest uppercase hover:border-[#F5ECD7]/20 transition-colors">
-              Cancel
+              Откажи
             </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 py-3 bg-[#C9A84C] text-[#0D0B08] text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors disabled:opacity-50"
-            >
-              {saving ? "Saving..." : isEdit ? "Save Changes" : "Create Product"}
+            <button type="submit" disabled={saving} className="flex-1 py-3 bg-[#C9A84C] text-[#0D0B08] text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors disabled:opacity-50">
+              {saving ? "Запазване..." : isEdit ? "Запази промените" : "Създай продукт"}
             </button>
           </div>
         </form>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
-import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, CheckCircle, Clock, Phone } from "lucide-react";
+import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone } from "lucide-react";
 import ProductFormModal from "./ProductFormModal";
 
 type Product = {
@@ -59,7 +59,7 @@ export default function AdminDashboardClient({
   };
 
   const deleteProduct = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
+    if (!confirm("Изтриване на продукта?")) return;
     await fetch(`/api/products/${id}`, { method: "DELETE" });
     setProducts(ps => ps.filter(p => p.id !== id));
   };
@@ -105,12 +105,12 @@ export default function AdminDashboardClient({
           <p className="text-[#C9A84C] text-sm tracking-widest uppercase font-medium" style={{ fontFamily: "var(--font-playfair)" }}>
             Premium Perfumes
           </p>
-          <p className="text-[#F5ECD7]/30 text-xs mt-0.5">Admin Panel</p>
+          <p className="text-[#F5ECD7]/30 text-xs mt-0.5">Администрация</p>
         </div>
         <nav className="flex-1 px-4 py-6 flex flex-col gap-1">
           {[
-            { key: "products" as Tab, label: "Products", icon: Package },
-            { key: "requests" as Tab, label: "Requests", icon: ShoppingBag, badge: newRequests },
+            { key: "products" as Tab, label: "Продукти", icon: Package },
+            { key: "requests" as Tab, label: "Заявки", icon: ShoppingBag, badge: newRequests },
           ].map(({ key, label, icon: Icon, badge }) => (
             <button
               key={key}
@@ -139,7 +139,7 @@ export default function AdminDashboardClient({
             className="flex items-center gap-2 text-sm text-[#F5ECD7]/30 hover:text-red-400 transition-colors px-3 py-2"
           >
             <LogOut size={14} />
-            Logout
+            Изход
           </button>
         </div>
       </aside>
@@ -150,15 +150,15 @@ export default function AdminDashboardClient({
           <div className="p-8">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Products</h1>
-                <p className="text-[#F5ECD7]/30 text-sm mt-1">{products.length} items in catalog</p>
+                <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Продукти</h1>
+                <p className="text-[#F5ECD7]/30 text-sm mt-1">{products.length} продукта в каталога</p>
               </div>
               <button
                 onClick={() => setShowNewForm(true)}
                 className="flex items-center gap-2 bg-[#C9A84C] text-[#0D0B08] px-4 py-2.5 text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors"
               >
                 <Plus size={14} />
-                Add Product
+                Нов продукт
               </button>
             </div>
 
@@ -166,7 +166,7 @@ export default function AdminDashboardClient({
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#2A2418]">
-                    {["Product", "Brand", "Price", "Stock", "Status", "Actions"].map(h => (
+                    {["Продукт", "Марка", "Цена", "Наличност", "Статус", "Действия"].map(h => (
                       <th key={h} className="text-left text-xs text-[#F5ECD7]/30 tracking-widest uppercase px-4 py-3 font-normal">
                         {h}
                       </th>
@@ -186,8 +186,8 @@ export default function AdminDashboardClient({
                             )}
                           </div>
                           <div>
-                            <p className="text-[#F5ECD7] text-sm">{product.name}</p>
-                            <p className="text-[#F5ECD7]/30 text-xs">{product.nameBg}</p>
+                            <p className="text-[#F5ECD7] text-sm">{product.nameBg || product.name}</p>
+                            <p className="text-[#F5ECD7]/30 text-xs">{product.name}</p>
                           </div>
                         </div>
                       </td>
@@ -198,7 +198,7 @@ export default function AdminDashboardClient({
                           <span className="ml-2 text-xs bg-[#C9A84C]/20 text-[#C9A84C] px-1.5 py-0.5">-{product.discountPct}%</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-[#F5ECD7]/60 text-sm">{product.quantity}</td>
+                      <td className="px-4 py-3 text-[#F5ECD7]/60 text-sm">{product.quantity} бр.</td>
                       <td className="px-4 py-3">
                         <button
                           onClick={() => toggleAvailable(product)}
@@ -208,21 +208,15 @@ export default function AdminDashboardClient({
                               : "border-red-500/30 text-red-400 hover:bg-red-500/10"
                           }`}
                         >
-                          {product.available ? "Active" : "Hidden"}
+                          {product.available ? "Активен" : "Скрит"}
                         </button>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => setEditProduct(product)}
-                            className="text-[#F5ECD7]/40 hover:text-[#C9A84C] transition-colors p-1"
-                          >
+                          <button onClick={() => setEditProduct(product)} className="text-[#F5ECD7]/40 hover:text-[#C9A84C] transition-colors p-1">
                             <Pencil size={14} />
                           </button>
-                          <button
-                            onClick={() => deleteProduct(product.id)}
-                            className="text-[#F5ECD7]/40 hover:text-red-400 transition-colors p-1"
-                          >
+                          <button onClick={() => deleteProduct(product.id)} className="text-[#F5ECD7]/40 hover:text-red-400 transition-colors p-1">
                             <Trash2 size={14} />
                           </button>
                         </div>
@@ -232,7 +226,7 @@ export default function AdminDashboardClient({
                 </tbody>
               </table>
               {products.length === 0 && (
-                <div className="text-center py-16 text-[#F5ECD7]/20">No products yet.</div>
+                <div className="text-center py-16 text-[#F5ECD7]/20">Няма добавени продукти.</div>
               )}
             </div>
           </div>
@@ -241,8 +235,8 @@ export default function AdminDashboardClient({
         {tab === "requests" && (
           <div className="p-8">
             <div className="mb-8">
-              <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Purchase Requests</h1>
-              <p className="text-[#F5ECD7]/30 text-sm mt-1">{requests.length} total requests</p>
+              <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Заявки за покупка</h1>
+              <p className="text-[#F5ECD7]/30 text-sm mt-1">{requests.length} общо заявки</p>
             </div>
 
             <div className="flex flex-col gap-4">
@@ -270,19 +264,18 @@ export default function AdminDashboardClient({
                           onChange={e => updateRequestStatus(req.id, e.target.value)}
                           className="text-xs px-2 py-1 rounded-none border-[#2A2418]"
                         >
-                          <option value="new">New</option>
-                          <option value="contacted">Contacted</option>
-                          <option value="fulfilled">Fulfilled</option>
+                          <option value="new">Нова</option>
+                          <option value="contacted">Свързахме се</option>
+                          <option value="fulfilled">Изпълнена</option>
                         </select>
                       </div>
                     </div>
 
-                    {/* Items */}
                     <div className="mt-4 pt-4 border-t border-[#2A2418]">
-                      <p className="text-xs text-[#C9A84C] tracking-widest uppercase mb-2">Items</p>
+                      <p className="text-xs text-[#C9A84C] tracking-widest uppercase mb-2">Артикули</p>
                       {items.map((item, i) => (
                         <div key={i} className="flex justify-between text-sm py-1">
-                          <span className="text-[#F5ECD7]/70">{item.name} — {item.volume}</span>
+                          <span className="text-[#F5ECD7]/70">{item.nameBg || item.name} — {item.volume}</span>
                           <span className="text-[#C9A84C]">{formatPrice(item.price)}</span>
                         </div>
                       ))}
@@ -290,7 +283,7 @@ export default function AdminDashboardClient({
 
                     {req.message && (
                       <div className="mt-3 pt-3 border-t border-[#2A2418]">
-                        <p className="text-xs text-[#F5ECD7]/30 tracking-wider uppercase mb-1">Note</p>
+                        <p className="text-xs text-[#F5ECD7]/30 tracking-wider uppercase mb-1">Бележка</p>
                         <p className="text-[#F5ECD7]/60 text-sm">{req.message}</p>
                       </div>
                     )}
@@ -298,7 +291,7 @@ export default function AdminDashboardClient({
                 );
               })}
               {requests.length === 0 && (
-                <div className="text-center py-16 text-[#F5ECD7]/20">No requests yet.</div>
+                <div className="text-center py-16 text-[#F5ECD7]/20">Няма заявки все още.</div>
               )}
             </div>
           </div>

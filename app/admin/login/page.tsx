@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
     if (res.ok) {
       router.push("/admin");
     } else {
-      setError("Invalid username or password");
+      setError("Грешно потребителско име или парола.");
     }
     setLoading(false);
   };
@@ -33,11 +33,11 @@ export default function AdminLoginPage() {
           <p className="text-[#C9A84C] tracking-widest text-xl uppercase font-medium mb-1" style={{ fontFamily: "var(--font-playfair)" }}>
             Premium Perfumes
           </p>
-          <p className="text-[#F5ECD7]/30 text-xs tracking-widest uppercase">Admin Panel</p>
+          <p className="text-[#F5ECD7]/30 text-xs tracking-widest uppercase">Администрация</p>
         </div>
         <form onSubmit={submit} className="bg-[#161410] border border-[#2A2418] p-8 flex flex-col gap-5">
           <div>
-            <label className="text-xs text-[#F5ECD7]/50 tracking-widest uppercase block mb-2">Username</label>
+            <label className="text-xs text-[#F5ECD7]/50 tracking-widest uppercase block mb-2">Потребителско име</label>
             <input
               required
               value={form.username}
@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
             />
           </div>
           <div>
-            <label className="text-xs text-[#F5ECD7]/50 tracking-widest uppercase block mb-2">Password</label>
+            <label className="text-xs text-[#F5ECD7]/50 tracking-widest uppercase block mb-2">Парола</label>
             <input
               required
               type="password"
@@ -61,7 +61,7 @@ export default function AdminLoginPage() {
             disabled={loading}
             className="w-full py-3 bg-[#C9A84C] text-[#0D0B08] text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors disabled:opacity-50"
           >
-            {loading ? "..." : "Sign In"}
+            {loading ? "..." : "Вход"}
           </button>
         </form>
       </div>

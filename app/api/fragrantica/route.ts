@@ -5,85 +5,91 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session.isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { url } = await req.json();
-  if (!url || !url.includes("fragrantica.com")) {
-    return NextResponse.json({ error: "Invalid Fragrantica URL" }, { status: 400 });
+  const { name, brand } = await req.json();
+  if (!name || !brand) {
+    return NextResponse.json({ error: "Name and brand are required" }, { status: 400 });
   }
 
-  // Step 1: Extract brand + name from URL
-  const urlParts = url.match(/\/perfume\/([^/]+)\/([^/]+?)(?:-\d+)?\.html/);
-  const brandFromUrl = urlParts ? urlParts[1].replace(/-/g, " ") : "";
-  const nameFromUrl = urlParts ? urlParts[2].replace(/-\d+$/, "").replace(/-/g, " ") : "";
-
-  // Step 2: Try proxy for description, gender, and Fragrantica image
   let description = "";
   let gender = "Unisex";
   const images: string[] = [];
+  let notes: string[] = [];
 
+  // Step 1: Search Fragrantica for the product
   try {
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
-    if (res.ok) {
-      const data = await res.json();
-      const html: string = data.contents || "";
+    const searchQuery = `${brand} ${name}`;
+    const searchUrl = `https://www.fragrantica.com/search/?query=${encodeURIComponent(searchQuery)}`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(searchUrl)}`;
+    const searchRes = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
 
-      // Description
-      const descMatch = html.match(/itemprop="description"[^>]*>([\s\S]*?)<\/p>/) ||
-                        html.match(/<div[^>]*class="[^"]*description[^"]*"[^>]*>([\s\S]*?)<\/div>/);
-      if (descMatch) {
-        description = descMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-      }
+    if (searchRes.ok) {
+      const searchData = await searchRes.json();
+      const searchHtml: string = searchData.contents || "";
 
-      // Gender
-      if (/for women and men|unisex|shared/i.test(html)) gender = "Unisex";
-      else if (/for women|feminine/i.test(html)) gender = "Women";
-      else if (/for men|masculine/i.test(html)) gender = "Men";
+      // Find first perfume result link
+      const linkMatch = searchHtml.match(/href="(https:\/\/www\.fragrantica\.com\/perfume\/[^"]+\.html)"/);
+      if (linkMatch) {
+        const perfumeUrl = linkMatch[1];
 
-      // Notes
-      const notesMatches = [...html.matchAll(/class="[^"]*note-name[^"]*"[^>]*>([^<]+)</g)];
-      const notes = notesMatches.map((m) => m[1].trim()).filter(Boolean).slice(0, 8);
-      if (notes.length > 0 && description) {
-        description += ` Fragrance notes: ${notes.join(", ")}.`;
-      }
+        // Fetch the perfume page
+        const perfumeProxy = `https://api.allorigins.win/get?url=${encodeURIComponent(perfumeUrl)}`;
+        const perfumeRes = await fetch(perfumeProxy, { signal: AbortSignal.timeout(8000) });
 
-      // All images from the page
-      const allImgs = [...html.matchAll(/<img[^>]+src="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp))[^"]*"/gi)];
-      for (const m of allImgs) {
-        const src = m[1];
-        if (
-          src &&
-          !src.includes("logo") &&
-          !src.includes("icon") &&
-          !src.includes("banner") &&
-          !src.includes("ad") &&
-          !images.includes(src) &&
-          images.length < 5
-        ) {
-          images.push(src);
+        if (perfumeRes.ok) {
+          const perfumeData = await perfumeRes.json();
+          const html: string = perfumeData.contents || "";
+
+          // Description
+          const descMatch = html.match(/itemprop="description"[^>]*>([\s\S]*?)<\/p>/) ||
+                            html.match(/<p[^>]*class="[^"]*description[^"]*"[^>]*>([\s\S]*?)<\/p>/);
+          if (descMatch) {
+            description = descMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+          }
+
+          // Gender
+          if (/for women and men|unisex|shared/i.test(html)) gender = "Unisex";
+          else if (/for women|feminine/i.test(html)) gender = "Women";
+          else if (/for men|masculine/i.test(html)) gender = "Men";
+
+          // Notes
+          const notesMatches = [...html.matchAll(/class="[^"]*note-name[^"]*"[^>]*>([^<]+)</g)];
+          notes = notesMatches.map((m) => m[1].trim()).filter(Boolean).slice(0, 10);
+          if (notes.length > 0 && description) {
+            description += `\n\nНотки на аромата: ${notes.join(", ")}.`;
+          }
+
+          // Images from page
+          const allImgs = [...html.matchAll(/<img[^>]+src="(https?:\/\/[^"]+\.(jpg|jpeg|png|webp))[^"]*"/gi)];
+          for (const m of allImgs) {
+            const src = m[1];
+            if (src && !src.includes("logo") && !src.includes("icon") && !images.includes(src) && images.length < 3) {
+              images.push(src);
+            }
+          }
+
+          // og:image
+          if (images.length === 0) {
+            const ogImg = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/);
+            if (ogImg) images.push(ogImg[1].trim());
+          }
         }
-      }
-
-      // og:image as fallback
-      if (images.length === 0) {
-        const ogImg = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/);
-        if (ogImg) images.push(ogImg[1].trim());
       }
     }
   } catch {
-    // Proxy failed
+    // Fragrantica search failed, continue to Google
   }
 
-  // Step 3: Google Image Search (if API keys available)
-  if (images.length < 5 && process.env.GOOGLE_API_KEY && process.env.GOOGLE_CSE_ID) {
+  // Step 2: Google Image Search
+  if (process.env.GOOGLE_API_KEY && process.env.GOOGLE_CSE_ID) {
     try {
-      const query = `${brandFromUrl} ${nameFromUrl} perfume bottle official`;
+      const query = `${brand} ${name} perfume bottle`;
       const googleUrl = `https://www.googleapis.com/customsearch/v1?key=${process.env.GOOGLE_API_KEY}&cx=${process.env.GOOGLE_CSE_ID}&q=${encodeURIComponent(query)}&searchType=image&num=8&imgSize=large&safe=active`;
       const gRes = await fetch(googleUrl, { signal: AbortSignal.timeout(8000) });
       if (gRes.ok) {
         const gData = await gRes.json();
         for (const item of (gData.items || [])) {
           const imgUrl: string = item.link || "";
-          if (imgUrl && !imgUrl.endsWith(".svg") && !images.includes(imgUrl) && images.length < 5) {
+          if (imgUrl && !imgUrl.endsWith(".svg") && !images.includes(imgUrl) && images.length < 6) {
             images.push(imgUrl);
           }
         }
@@ -93,11 +99,5 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({
-    name: nameFromUrl,
-    brand: brandFromUrl,
-    description,
-    gender,
-    images,
-  });
+  return NextResponse.json({ description, gender, images, notes });
 }
