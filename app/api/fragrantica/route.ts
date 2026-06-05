@@ -10,67 +10,57 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid Fragrantica URL" }, { status: 400 });
   }
 
+  // Step 1: Always extract brand + name from the URL itself
+  // e.g. /perfume/Al-Haramain/Amber-Oud-Gold-12345.html
+  const urlParts = url.match(/\/perfume\/([^/]+)\/([^/]+?)(?:-\d+)?\.html/);
+  const brandFromUrl = urlParts ? urlParts[1].replace(/-/g, " ") : "";
+  const nameFromUrl = urlParts ? urlParts[2].replace(/-\d+$/, "").replace(/-/g, " ") : "";
+
+  // Step 2: Try to fetch the full page via a proxy for more details
+  let description = "";
+  let gender = "Unisex";
+  let image = "";
+
   try {
-    const res = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-      },
-    });
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+    if (res.ok) {
+      const data = await res.json();
+      const html: string = data.contents || "";
 
-    if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
-    const html = await res.text();
+      // Description
+      const descMatch = html.match(/itemprop="description"[^>]*>([\s\S]*?)<\/p>/) ||
+                        html.match(/<div[^>]*class="[^"]*description[^"]*"[^>]*>([\s\S]*?)<\/div>/);
+      if (descMatch) {
+        description = descMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      }
 
-    // Extract name
-    const nameMatch = html.match(/<h1[^>]*itemprop="name"[^>]*>([^<]+)<\/h1>/) ||
-                      html.match(/<h1[^>]*>([^<]+)<\/h1>/);
-    const name = nameMatch ? nameMatch[1].trim() : "";
+      // Gender
+      if (/for women and men|unisex|shared/i.test(html)) gender = "Unisex";
+      else if (/for women|feminine/i.test(html)) gender = "Women";
+      else if (/for men|masculine/i.test(html)) gender = "Men";
 
-    // Extract brand
-    const brandMatch = html.match(/itemprop="brand"[^>]*>\s*<[^>]+>([^<]+)</) ||
-                       html.match(/<span[^>]*itemprop="name"[^>]*>([^<]+)<\/span>/);
-    const brand = brandMatch ? brandMatch[1].trim() : "";
+      // Image
+      const imgMatch = html.match(/og:image"[^>]*content="([^"]+)"/) ||
+                       html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/);
+      if (imgMatch) image = imgMatch[1].trim();
 
-    // Extract description — look for the main description paragraph
-    const descMatch = html.match(/class="[^"]*fragrance-description[^"]*"[^>]*>([\s\S]*?)<\/div>/) ||
-                      html.match(/<div[^>]*itemprop="description"[^>]*>([\s\S]*?)<\/div>/);
-    let description = "";
-    if (descMatch) {
-      description = descMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      // Notes
+      const notesMatches = [...html.matchAll(/class="[^"]*note-name[^"]*"[^>]*>([^<]+)</g)];
+      const notes = notesMatches.map(m => m[1].trim()).filter(Boolean).slice(0, 8);
+      if (notes.length > 0 && description) {
+        description += ` Fragrance notes: ${notes.join(", ")}.`;
+      }
     }
-
-    // Extract gender
-    let gender = "Unisex";
-    if (html.includes("for women") || html.includes("feminine") || html.includes("Women")) gender = "Women";
-    if (html.includes("for men") || html.includes("masculine") || html.includes(" Men")) gender = "Men";
-    if (html.includes("for women and men") || html.includes("unisex") || html.includes("shared")) gender = "Unisex";
-
-    // Extract main image
-    const imgMatch = html.match(/<img[^>]*itemprop="image"[^>]*src="([^"]+)"/) ||
-                     html.match(/og:image"[^>]*content="([^"]+)"/) ||
-                     html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/);
-    const image = imgMatch ? imgMatch[1].trim() : "";
-
-    // Extract notes for description enrichment
-    const notesMatches = html.matchAll(/class="[^"]*note-name[^"]*"[^>]*>([^<]+)</g);
-    const notes = [...notesMatches].map(m => m[1].trim()).filter(Boolean).slice(0, 10);
-
-    // Build enriched description
-    let fullDescription = description;
-    if (notes.length > 0) {
-      fullDescription += `\n\nFragrance notes: ${notes.join(", ")}.`;
-    }
-
-    return NextResponse.json({
-      name,
-      brand,
-      description: fullDescription.trim(),
-      gender,
-      image,
-      notes,
-    });
-  } catch (err) {
-    return NextResponse.json({ error: `Failed to fetch fragrance data: ${String(err)}` }, { status: 500 });
+  } catch {
+    // Proxy failed — just use URL data, still useful
   }
+
+  return NextResponse.json({
+    name: nameFromUrl,
+    brand: brandFromUrl,
+    description,
+    gender,
+    image,
+  });
 }
