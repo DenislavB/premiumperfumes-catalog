@@ -60,9 +60,9 @@ export default function ProductCard({ product, onRequest }: { product: Product; 
           </h3>
         </Link>
         <p className="text-[#F5ECD7]/40 text-xs mb-2">{product.volume}</p>
-        {product.notes && (
+        {(product.notesBg || product.notes) && (
           <p className="text-[#F5ECD7]/30 text-xs mb-3 leading-relaxed line-clamp-2">
-            {product.notes}
+            {locale === "bg" ? product.notesBg || product.notes : product.notes || product.notesBg}
           </p>
         )}
 

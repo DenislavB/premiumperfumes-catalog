@@ -13,6 +13,7 @@ export type Product = {
   quantity: number;
   images: string[];
   notes: string;
+  notesBg: string;
   featured: boolean;
   inPromotion: boolean;
   discountPct: number | null;

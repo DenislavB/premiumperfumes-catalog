@@ -22,12 +22,13 @@ type Product = {
   description: string;
   descriptionBg: string;
   notes: string;
+  notesBg: string;
 };
 
 const empty = {
   name: "", nameBg: "", brand: "", volume: "", gender: "Unisex",
   price: "", originalPrice: "", quantity: "0",
-  description: "", descriptionBg: "", notes: "",
+  description: "", descriptionBg: "", notes: "", notesBg: "",
   images: [] as string[],
   featured: false, inPromotion: false, discountPct: "", available: true,
 };
@@ -51,6 +52,7 @@ export default function ProductFormModal({
           quantity: String(product.quantity),
           description: product.description, descriptionBg: product.descriptionBg,
           notes: product.notes || "",
+          notesBg: product.notesBg || "",
           images: product.images,
           featured: product.featured, inPromotion: product.inPromotion,
           discountPct: String(product.discountPct ?? ""), available: product.available,
@@ -91,6 +93,7 @@ export default function ProductFormModal({
       if (data.descriptionBg) f("descriptionBg", data.descriptionBg);
       if (data.gender) f("gender", data.gender);
       if (data.notes) f("notes", data.notes);
+      if (data.notesBg) f("notesBg", data.notesBg);
       if (data.images?.length > 0) {
         setSuggestedImages(data.images);
         setSearchMsg(`✓ Описанията на EN и BG са попълнени! Изберете снимки по-долу.`);
@@ -261,17 +264,31 @@ export default function ProductFormModal({
               <textarea rows={4} value={form.descriptionBg} onChange={e => f("descriptionBg", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none resize-none" />
             </div>
 
-            {/* Notes */}
+            {/* Notes EN */}
             <div className="col-span-2">
               <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">
-                Нотки на аромата
+                Нотки на аромата (EN)
                 <span className="ml-2 text-[#F5ECD7]/20 normal-case tracking-normal">(попълва се автоматично)</span>
               </label>
               <input
                 value={form.notes as string}
                 onChange={e => f("notes", e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-none"
-                placeholder="напр. роза, уд, амбра, мускус, сандалово дърво"
+                placeholder="rose, oud, amber, musk, sandalwood"
+              />
+            </div>
+
+            {/* Notes BG */}
+            <div className="col-span-2">
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">
+                Нотки на аромата (BG)
+                <span className="ml-2 text-[#F5ECD7]/20 normal-case tracking-normal">(попълва се автоматично)</span>
+              </label>
+              <input
+                value={form.notesBg as string}
+                onChange={e => f("notesBg", e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-none"
+                placeholder="роза, уд, амбра, мускус, сандалово дърво"
               />
             </div>
 

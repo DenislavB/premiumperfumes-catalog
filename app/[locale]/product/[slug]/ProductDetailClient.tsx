@@ -22,6 +22,7 @@ type Product = {
   quantity: number;
   images: string[];
   notes: string;
+  notesBg: string;
   inPromotion: boolean;
   discountPct: number | null;
   featured: boolean;
@@ -139,20 +140,25 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
               <h3 className="text-xs text-[#C9A84C] tracking-[0.4em] uppercase mb-4">{t("product.description")}</h3>
               <p className="text-[#F5ECD7]/60 leading-relaxed">{description}</p>
 
-              {product.notes && (
-                <div className="mt-6">
-                  <h3 className="text-xs text-[#C9A84C] tracking-[0.4em] uppercase mb-3">
-                    {locale === "bg" ? "Нотки на аромата" : "Fragrance Notes"}
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {product.notes.split(",").map((note, i) => (
-                      <span key={i} className="text-xs border border-[#C9A84C]/30 text-[#F5ECD7]/60 px-3 py-1">
-                        {note.trim()}
-                      </span>
-                    ))}
+              {(product.notes || product.notesBg) && (() => {
+                const displayNotes = locale === "bg"
+                  ? (product.notesBg || product.notes)
+                  : (product.notes || product.notesBg);
+                return (
+                  <div className="mt-6">
+                    <h3 className="text-xs text-[#C9A84C] tracking-[0.4em] uppercase mb-3">
+                      {locale === "bg" ? "Нотки на аромата" : "Fragrance Notes"}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {displayNotes.split(",").map((note, i) => (
+                        <span key={i} className="text-xs border border-[#C9A84C]/30 text-[#F5ECD7]/60 px-3 py-1 hover:border-[#C9A84C]/60 transition-colors">
+                          {note.trim()}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>

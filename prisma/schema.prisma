@@ -21,6 +21,7 @@ model Product {
   quantity      Int      @default(0)
   images        String[]
   notes         String   @default("")
+  notesBg       String   @default("")
   featured      Boolean  @default(false)
   inPromotion   Boolean  @default(false)
   discountPct   Int?

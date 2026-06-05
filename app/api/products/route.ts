@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       quantity: parseInt(body.quantity) || 0,
       images: body.images || [],
       notes: body.notes || "",
+      notesBg: body.notesBg || "",
       featured: body.featured || false,
       inPromotion: body.inPromotion || false,
       discountPct: body.discountPct ? parseInt(body.discountPct) : null,

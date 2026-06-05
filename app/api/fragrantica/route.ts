@@ -15,19 +15,39 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "xAI API key not configured" }, { status: 500 });
   }
 
-  const prompt = `Ти си експерт по луксозни парфюми. За парфюма "${name}" от "${brand}" предостави:
+  const prompt = `You are a luxury perfume copywriter creating product descriptions for a high-end Bulgarian perfume catalog.
 
-1. Елегантно описание на английски (3-4 изречения) подходящо за луксозен каталог. Спомени характера на аромата, основните нотки и за кого е подходящ.
-2. Същото описание на български (3-4 изречения) — луксозен стил.
-3. Пола: Men, Women или Unisex.
-4. Основни нотки на аромата (до 8 нотки на английски, разделени със запетая).
+For the perfume "${name}" by "${brand}", write the following. Be specific about this perfume's actual character — don't be generic.
 
-Отговори САМО с валиден JSON в този точен формат:
+---
+
+ENGLISH DESCRIPTION:
+Write a compelling, elegant product description in English. Structure it like a luxury brand would:
+- First sentence: a captivating opening that captures the soul of the scent
+- Second sentence: describe the fragrance journey (top notes feel, heart, base)
+- Third sentence: the mood, occasion, or person this perfume is made for
+Keep it under 80 words. No bullet points. Flowing, poetic prose.
+
+BULGARIAN DESCRIPTION:
+Translate and adapt the above into elegant Bulgarian. Same structure, same feel. Natural Bulgarian — not a robotic translation. Under 80 words.
+
+NOTES IN ENGLISH:
+List the key fragrance notes separated by commas. Only the notes, nothing else. Example: Bulgarian rose, oud, amber, white musk, sandalwood
+
+NOTES IN BULGARIAN:
+Same notes translated to Bulgarian, separated by commas. Example: Българска роза, уд, амбра, бял мускус, сандалово дърво
+
+GENDER: Men | Women | Unisex (pick one)
+
+---
+
+Respond ONLY with valid JSON, no markdown, no explanation:
 {
   "descriptionEn": "...",
   "descriptionBg": "...",
-  "gender": "Men|Women|Unisex",
-  "notes": "rose, oud, amber, musk"
+  "notes": "note1, note2, note3",
+  "notesBg": "нотка1, нотка2, нотка3",
+  "gender": "Men|Women|Unisex"
 }`;
 
   try {
@@ -40,10 +60,10 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: "grok-3-mini",
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 1024,
+        temperature: 0.8,
+        max_tokens: 1200,
       }),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(20000),
     });
 
     if (!xaiRes.ok) {
@@ -54,8 +74,9 @@ export async function POST(req: NextRequest) {
     const xaiData = await xaiRes.json();
     const text = xaiData?.choices?.[0]?.message?.content || "";
 
-    // Extract JSON
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    // Extract JSON — strip markdown code blocks if present
+    const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("Не е намерен JSON в отговора");
 
     const parsed = JSON.parse(jsonMatch[0]);
@@ -63,8 +84,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       description: parsed.descriptionEn || "",
       descriptionBg: parsed.descriptionBg || "",
-      gender: parsed.gender || "Unisex",
       notes: parsed.notes || "",
+      notesBg: parsed.notesBg || "",
+      gender: parsed.gender || "Unisex",
       images: [],
     });
 

@@ -29,6 +29,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.quantity !== undefined) data.quantity = parseInt(body.quantity);
   if (body.images !== undefined) data.images = body.images;
   if (body.notes !== undefined) data.notes = body.notes;
+  if (body.notesBg !== undefined) data.notesBg = body.notesBg;
   if (body.featured !== undefined) data.featured = body.featured;
   if (body.inPromotion !== undefined) data.inPromotion = body.inPromotion;
   if (body.discountPct !== undefined) data.discountPct = body.discountPct ? parseInt(body.discountPct) : null;
