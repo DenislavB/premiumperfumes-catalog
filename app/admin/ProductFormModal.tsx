@@ -68,6 +68,7 @@ export default function ProductFormModal({
   const [searching, setSearching] = useState(false);
   const [searchMsg, setSearchMsg] = useState("");
   const [suggestedImages, setSuggestedImages] = useState<string[]>([]);
+  const [zoomedImg, setZoomedImg] = useState<string | null>(null);
 
   const f = (key: keyof typeof form, val: unknown) =>
     setForm(prev => ({ ...prev, [key]: val }));
@@ -207,21 +208,31 @@ export default function ProductFormModal({
                   {suggestedImages.map((src, i) => {
                     const selected = (form.images as string[]).includes(src);
                     return (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => toggleSuggestedImage(src)}
-                        className={`relative w-20 h-24 border-2 overflow-hidden transition-all ${
-                          selected ? "border-[#C9A84C]" : "border-[#2A2418] opacity-50 hover:opacity-90"
-                        }`}
-                      >
-                        <img src={src} alt="" className="w-full h-full object-cover" />
-                        {selected && (
-                          <div className="absolute inset-0 bg-[#C9A84C]/30 flex items-center justify-center">
-                            <span className="text-white text-xl font-bold drop-shadow">✓</span>
-                          </div>
-                        )}
-                      </button>
+                      <div key={i} className="relative group">
+                        <button
+                          type="button"
+                          onClick={() => toggleSuggestedImage(src)}
+                          className={`relative w-20 h-24 border-2 overflow-hidden transition-all ${
+                            selected ? "border-[#C9A84C]" : "border-[#2A2418] opacity-50 hover:opacity-90"
+                          }`}
+                        >
+                          <img src={src} alt="" className="w-full h-full object-cover" />
+                          {selected && (
+                            <div className="absolute inset-0 bg-[#C9A84C]/30 flex items-center justify-center">
+                              <span className="text-white text-xl font-bold drop-shadow">✓</span>
+                            </div>
+                          )}
+                        </button>
+                        {/* Zoom button */}
+                        <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); setZoomedImg(src); }}
+                          className="absolute top-1 right-1 bg-[#0D0B08]/80 text-[#C9A84C] text-xs w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Увеличи"
+                        >
+                          ⤢
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -364,6 +375,37 @@ export default function ProductFormModal({
           </div>
         </form>
       </div>
+
+      {/* Zoom lightbox */}
+      {zoomedImg && (
+        <div
+          className="fixed inset-0 z-[200] bg-[#0D0B08]/90 flex items-center justify-center p-8"
+          onClick={() => setZoomedImg(null)}
+        >
+          <div className="relative max-w-lg max-h-full">
+            <img src={zoomedImg} alt="" className="max-w-full max-h-[80vh] object-contain" />
+            <button
+              onClick={() => setZoomedImg(null)}
+              className="absolute top-2 right-2 bg-[#0D0B08]/80 text-[#C9A84C] w-8 h-8 flex items-center justify-center text-lg hover:bg-[#C9A84C]/20 transition-colors"
+            >
+              ✕
+            </button>
+            <div className="flex gap-2 mt-3 justify-center">
+              <button
+                type="button"
+                onClick={e => { e.stopPropagation(); toggleSuggestedImage(zoomedImg); setZoomedImg(null); }}
+                className={`px-4 py-2 text-xs font-bold tracking-widest uppercase transition-colors ${
+                  (form.images as string[]).includes(zoomedImg)
+                    ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                    : "bg-[#C9A84C] text-[#0D0B08]"
+                }`}
+              >
+                {(form.images as string[]).includes(zoomedImg) ? "Премахни" : "Добави тази снимка"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

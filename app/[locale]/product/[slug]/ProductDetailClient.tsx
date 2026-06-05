@@ -34,7 +34,7 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
   const [imgIdx, setImgIdx] = useState(0);
   const [showModal, setShowModal] = useState(false);
 
-  const name = locale === "bg" ? product.nameBg : product.name;
+  const name = product.name; // Always English
   const description = locale === "bg" ? product.descriptionBg : product.description;
   const isOutOfStock = !product.available || product.quantity === 0;
 

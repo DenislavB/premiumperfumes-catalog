@@ -8,7 +8,7 @@ import type { Product } from "@/lib/types";
 export default function ProductCard({ product, onRequest }: { product: Product; onRequest: (p: Product) => void }) {
   const t = useTranslations("catalog");
   const locale = useLocale();
-  const name = locale === "bg" ? product.nameBg : product.name;
+  const name = product.name; // Always English
   const isOutOfStock = !product.available || product.quantity === 0;
 
   return (
