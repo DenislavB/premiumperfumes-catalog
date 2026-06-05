@@ -81,13 +81,56 @@ Respond ONLY with valid JSON, no markdown, no explanation:
 
     const parsed = JSON.parse(jsonMatch[0]);
 
+    // Search Pexels for perfume images
+    const images: string[] = [];
+    if (process.env.PEXELS_API_KEY) {
+      try {
+        const query = `${brand} ${name} perfume bottle`;
+        const pexelsRes = await fetch(
+          `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=6&orientation=portrait`,
+          {
+            headers: { Authorization: process.env.PEXELS_API_KEY },
+            signal: AbortSignal.timeout(8000),
+          }
+        );
+        if (pexelsRes.ok) {
+          const pexelsData = await pexelsRes.json();
+          for (const photo of pexelsData.photos || []) {
+            if (photo.src?.large && images.length < 5) {
+              images.push(photo.src.large);
+            }
+          }
+        }
+        // If no brand-specific results, search generic luxury perfume
+        if (images.length === 0) {
+          const fallbackRes = await fetch(
+            `https://api.pexels.com/v1/search?query=luxury+perfume+bottle&per_page=6&orientation=portrait`,
+            {
+              headers: { Authorization: process.env.PEXELS_API_KEY },
+              signal: AbortSignal.timeout(8000),
+            }
+          );
+          if (fallbackRes.ok) {
+            const fallbackData = await fallbackRes.json();
+            for (const photo of fallbackData.photos || []) {
+              if (photo.src?.large && images.length < 5) {
+                images.push(photo.src.large);
+              }
+            }
+          }
+        }
+      } catch {
+        // Pexels failed, continue without images
+      }
+    }
+
     return NextResponse.json({
       description: parsed.descriptionEn || "",
       descriptionBg: parsed.descriptionBg || "",
       notes: parsed.notes || "",
       notesBg: parsed.notesBg || "",
       gender: parsed.gender || "Unisex",
-      images: [],
+      images,
     });
 
   } catch (err) {
