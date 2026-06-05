@@ -86,12 +86,13 @@ export default function ProductFormModal({
       if (!res.ok) throw new Error(data.error || "Грешка");
 
       if (data.description) f("description", data.description);
+      if (data.descriptionBg) f("descriptionBg", data.descriptionBg);
       if (data.gender) f("gender", data.gender);
       if (data.images?.length > 0) {
         setSuggestedImages(data.images);
-        setSearchMsg(`✓ Намерена информация! Изберете снимки по-долу.`);
+        setSearchMsg(`✓ Описанията на EN и BG са попълнени! Изберете снимки по-долу.`);
       } else {
-        setSearchMsg("✓ Намерена информация! Не са намерени снимки — добавете ги ръчно.");
+        setSearchMsg("✓ Описанията на EN и BG са попълнени автоматично! Добавете снимки ръчно.");
       }
     } catch (err) {
       setSearchMsg(`✗ ${String(err)}`);
