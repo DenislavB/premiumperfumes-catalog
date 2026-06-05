@@ -59,7 +59,12 @@ export default function ProductCard({ product, onRequest }: { product: Product; 
             {name}
           </h3>
         </Link>
-        <p className="text-[#F5ECD7]/40 text-xs mb-3">{product.volume}</p>
+        <p className="text-[#F5ECD7]/40 text-xs mb-2">{product.volume}</p>
+        {product.notes && (
+          <p className="text-[#F5ECD7]/30 text-xs mb-3 leading-relaxed line-clamp-2">
+            {product.notes}
+          </p>
+        )}
 
         <div className="flex items-baseline gap-2 mb-4">
           <span className="text-[#C9A84C] text-lg font-semibold">{formatPrice(product.price)}</span>

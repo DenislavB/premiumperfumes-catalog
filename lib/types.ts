@@ -12,6 +12,7 @@ export type Product = {
   originalPrice: number | null;
   quantity: number;
   images: string[];
+  notes: string;
   featured: boolean;
   inPromotion: boolean;
   discountPct: number | null;

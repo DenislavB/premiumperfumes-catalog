@@ -21,6 +21,7 @@ type Product = {
   originalPrice: number | null;
   quantity: number;
   images: string[];
+  notes: string;
   inPromotion: boolean;
   discountPct: number | null;
   featured: boolean;
@@ -137,6 +138,21 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
               <div className="h-px bg-[#2A2418] mb-6" />
               <h3 className="text-xs text-[#C9A84C] tracking-[0.4em] uppercase mb-4">{t("product.description")}</h3>
               <p className="text-[#F5ECD7]/60 leading-relaxed">{description}</p>
+
+              {product.notes && (
+                <div className="mt-6">
+                  <h3 className="text-xs text-[#C9A84C] tracking-[0.4em] uppercase mb-3">
+                    {locale === "bg" ? "Нотки на аромата" : "Fragrance Notes"}
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.notes.split(",").map((note, i) => (
+                      <span key={i} className="text-xs border border-[#C9A84C]/30 text-[#F5ECD7]/60 px-3 py-1">
+                        {note.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

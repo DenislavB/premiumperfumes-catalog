@@ -21,12 +21,13 @@ type Product = {
   available: boolean;
   description: string;
   descriptionBg: string;
+  notes: string;
 };
 
 const empty = {
   name: "", nameBg: "", brand: "", volume: "", gender: "Unisex",
   price: "", originalPrice: "", quantity: "0",
-  description: "", descriptionBg: "",
+  description: "", descriptionBg: "", notes: "",
   images: [] as string[],
   featured: false, inPromotion: false, discountPct: "", available: true,
 };
@@ -49,6 +50,7 @@ export default function ProductFormModal({
           price: String(product.price), originalPrice: String(product.originalPrice ?? ""),
           quantity: String(product.quantity),
           description: product.description, descriptionBg: product.descriptionBg,
+          notes: product.notes || "",
           images: product.images,
           featured: product.featured, inPromotion: product.inPromotion,
           discountPct: String(product.discountPct ?? ""), available: product.available,
@@ -88,6 +90,7 @@ export default function ProductFormModal({
       if (data.description) f("description", data.description);
       if (data.descriptionBg) f("descriptionBg", data.descriptionBg);
       if (data.gender) f("gender", data.gender);
+      if (data.notes) f("notes", data.notes);
       if (data.images?.length > 0) {
         setSuggestedImages(data.images);
         setSearchMsg(`✓ Описанията на EN и BG са попълнени! Изберете снимки по-долу.`);
@@ -256,6 +259,20 @@ export default function ProductFormModal({
             <div className="col-span-2">
               <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Описание (BG)</label>
               <textarea rows={4} value={form.descriptionBg} onChange={e => f("descriptionBg", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none resize-none" />
+            </div>
+
+            {/* Notes */}
+            <div className="col-span-2">
+              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">
+                Нотки на аромата
+                <span className="ml-2 text-[#F5ECD7]/20 normal-case tracking-normal">(попълва се автоматично)</span>
+              </label>
+              <input
+                value={form.notes as string}
+                onChange={e => f("notes", e.target.value)}
+                className="w-full px-3 py-2 text-sm rounded-none"
+                placeholder="напр. роза, уд, амбра, мускус, сандалово дърво"
+              />
             </div>
 
             {/* Manual image URL */}
