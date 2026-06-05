@@ -28,3 +28,27 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* Admin form inputs — clearly visible against dark background */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  background-color: #241F18 !important;
+  border: 1px solid #3A3020 !important;
+  color: #F5ECD7 !important;
+  outline: none;
+  border-radius: 0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus,
+select:focus {
+  border-color: #C9A84C !important;
+  box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.08) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(245, 236, 215, 0.2) !important;
+}

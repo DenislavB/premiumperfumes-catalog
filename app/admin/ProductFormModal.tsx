@@ -164,19 +164,19 @@ export default function ProductFormModal({
 
             {/* Step 1: Basic info first */}
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Наименование (EN) *</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Наименование (EN) *</label>
               <input required value={form.name} onChange={e => f("name", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. Oud For Glory" />
             </div>
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Наименование (BG) *</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Наименование (BG) *</label>
               <input required value={form.nameBg} onChange={e => f("nameBg", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. Уд за слава" />
             </div>
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Производител *</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Производител *</label>
               <input required value={form.brand} onChange={e => f("brand", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. Lattafa" />
             </div>
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Обем *</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Обем *</label>
               <input required value={form.volume} onChange={e => f("volume", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. 100ml" />
             </div>
 
@@ -241,7 +241,7 @@ export default function ProductFormModal({
 
             {/* Gender */}
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">За</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">За</label>
               <select value={form.gender} onChange={e => f("gender", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none">
                 <option value="Men">Мъже</option>
                 <option value="Women">Жени</option>
@@ -251,33 +251,33 @@ export default function ProductFormModal({
 
             {/* Quantity */}
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Количество</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Количество</label>
               <input type="number" min="0" value={form.quantity} onChange={e => f("quantity", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
             </div>
 
             {/* Prices */}
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Цена (лв.) *</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Цена (лв.) *</label>
               <input required type="number" step="0.01" min="0" value={form.price} onChange={e => f("price", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
             </div>
             <div>
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Стара цена (зачертана)</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Стара цена (зачертана)</label>
               <input type="number" step="0.01" min="0" value={form.originalPrice} onChange={e => f("originalPrice", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
             </div>
 
             {/* Descriptions */}
             <div className="col-span-2">
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Описание (EN)</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Описание (EN)</label>
               <textarea rows={4} value={form.description} onChange={e => f("description", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none resize-none" />
             </div>
             <div className="col-span-2">
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Описание (BG)</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Описание (BG)</label>
               <textarea rows={4} value={form.descriptionBg} onChange={e => f("descriptionBg", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none resize-none" />
             </div>
 
             {/* Notes EN */}
             <div className="col-span-2">
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">
                 Нотки на аромата (EN)
                 <span className="ml-2 text-[#F5ECD7]/20 normal-case tracking-normal">(попълва се автоматично)</span>
               </label>
@@ -291,7 +291,7 @@ export default function ProductFormModal({
 
             {/* Notes BG */}
             <div className="col-span-2">
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">
                 Нотки на аромата (BG)
                 <span className="ml-2 text-[#F5ECD7]/20 normal-case tracking-normal">(попълва се автоматично)</span>
               </label>
@@ -305,7 +305,7 @@ export default function ProductFormModal({
 
             {/* Manual image URL */}
             <div className="col-span-2">
-              <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Добави снимка по URL</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Добави снимка по URL</label>
               <div className="flex gap-2 mb-2">
                 <input
                   type="url"
@@ -356,7 +356,7 @@ export default function ProductFormModal({
               ))}
               {form.inPromotion && (
                 <div>
-                  <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Отстъпка %</label>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Отстъпка %</label>
                   <input type="number" min="1" max="99" value={form.discountPct} onChange={e => f("discountPct", e.target.value)} className="w-24 px-3 py-2 text-sm rounded-none" />
                 </div>
               )}
