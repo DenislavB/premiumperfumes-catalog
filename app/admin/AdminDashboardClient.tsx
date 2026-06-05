@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
-import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone } from "lucide-react";
+import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X } from "lucide-react";
 import ProductFormModal from "./ProductFormModal";
 
 type Product = {
@@ -52,6 +52,7 @@ export default function AdminDashboardClient({
   const [requests, setRequests] = useState(initialRequests);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const logout = async () => {
     await fetch("/api/admin/logout", { method: "POST" });
@@ -97,32 +98,54 @@ export default function AdminDashboardClient({
 
   const newRequests = requests.filter(r => r.status === "new").length;
 
+  const navItems = [
+    { key: "products" as Tab, label: "Продукти", icon: Package },
+    { key: "requests" as Tab, label: "Заявки", icon: ShoppingBag, badge: newRequests },
+  ];
+
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden relative">
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-[#0D0B08]/70 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-60 bg-[#161410] border-r border-[#2A2418] flex flex-col flex-shrink-0">
-        <div className="px-6 py-6 border-b border-[#2A2418]">
-          <p className="text-[#C9A84C] text-sm tracking-widest uppercase font-medium" style={{ fontFamily: "var(--font-playfair)" }}>
-            Premium Perfumes
-          </p>
-          <p className="text-[#F5ECD7]/30 text-xs mt-0.5">Администрация</p>
+      <aside className={`
+        fixed md:relative top-0 left-0 h-full z-40
+        w-64 bg-[#161410] border-r border-[#2A2418] flex flex-col flex-shrink-0
+        transition-transform duration-300
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+      `}>
+        <div className="px-6 py-5 border-b border-[#2A2418] flex items-center justify-between">
+          <div>
+            <p className="text-[#C9A84C] text-sm tracking-widest uppercase font-medium" style={{ fontFamily: "var(--font-playfair)" }}>
+              Premium Perfumes
+            </p>
+            <p className="text-[#F5ECD7]/30 text-xs mt-0.5">Администрация</p>
+          </div>
+          <button onClick={() => setSidebarOpen(false)} className="md:hidden text-[#F5ECD7]/40 hover:text-[#C9A84C]">
+            <X size={18} />
+          </button>
         </div>
+
         <nav className="flex-1 px-4 py-6 flex flex-col gap-1">
-          {[
-            { key: "products" as Tab, label: "Продукти", icon: Package },
-            { key: "requests" as Tab, label: "Заявки", icon: ShoppingBag, badge: newRequests },
-          ].map(({ key, label, icon: Icon, badge }) => (
+          {navItems.map(({ key, label, icon: Icon, badge }) => (
             <button
               key={key}
-              onClick={() => setTab(key)}
-              className={`flex items-center justify-between px-3 py-2.5 text-sm tracking-wide transition-colors rounded-sm ${
+              onClick={() => { setTab(key); setSidebarOpen(false); }}
+              className={`flex items-center justify-between px-3 py-3 text-sm tracking-wide transition-colors rounded-sm ${
                 tab === key
                   ? "bg-[#C9A84C]/15 text-[#C9A84C]"
                   : "text-[#F5ECD7]/50 hover:text-[#F5ECD7] hover:bg-[#F5ECD7]/5"
               }`}
             >
               <span className="flex items-center gap-2.5">
-                <Icon size={15} />
+                <Icon size={16} />
                 {label}
               </span>
               {badge ? (
@@ -133,10 +156,11 @@ export default function AdminDashboardClient({
             </button>
           ))}
         </nav>
+
         <div className="px-4 py-4 border-t border-[#2A2418]">
           <button
             onClick={logout}
-            className="flex items-center gap-2 text-sm text-[#F5ECD7]/30 hover:text-red-400 transition-colors px-3 py-2"
+            className="flex items-center gap-2 text-sm text-[#F5ECD7]/30 hover:text-red-400 transition-colors px-3 py-2 w-full"
           >
             <LogOut size={14} />
             Изход
@@ -145,10 +169,27 @@ export default function AdminDashboardClient({
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto w-full">
+
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-[#2A2418] bg-[#161410] sticky top-0 z-20">
+          <button onClick={() => setSidebarOpen(true)} className="text-[#F5ECD7]/60 hover:text-[#C9A84C]">
+            <Menu size={22} />
+          </button>
+          <p className="text-[#C9A84C] text-sm tracking-widest uppercase" style={{ fontFamily: "var(--font-playfair)" }}>
+            {tab === "products" ? "Продукти" : "Заявки"}
+          </p>
+          <button
+            onClick={() => setShowNewForm(true)}
+            className={`text-xs ${tab === "products" ? "text-[#C9A84C]" : "opacity-0 pointer-events-none"}`}
+          >
+            <Plus size={22} />
+          </button>
+        </div>
+
         {tab === "products" && (
-          <div className="p-8">
-            <div className="flex items-center justify-between mb-8">
+          <div className="p-4 md:p-8">
+            <div className="hidden md:flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Продукти</h1>
                 <p className="text-[#F5ECD7]/30 text-sm mt-1">{products.length} продукта в каталога</p>
@@ -162,7 +203,47 @@ export default function AdminDashboardClient({
               </button>
             </div>
 
-            <div className="bg-[#161410] border border-[#2A2418] overflow-hidden">
+            {/* Mobile: card list */}
+            <div className="md:hidden flex flex-col gap-3 mb-4">
+              {products.map(product => (
+                <div key={product.id} className="bg-[#161410] border border-[#2A2418] p-3 flex items-center gap-3">
+                  <div className="w-12 h-14 bg-[#0D0B08] flex-shrink-0 overflow-hidden">
+                    {product.images[0] ? (
+                      <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[#F5ECD7]/10">◈</div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[#F5ECD7] text-sm truncate">{product.name}</p>
+                    <p className="text-[#C9A84C] text-xs">{formatPrice(product.price)}</p>
+                    <p className="text-[#F5ECD7]/30 text-xs">{product.brand} · {product.quantity} бр.</p>
+                  </div>
+                  <div className="flex flex-col gap-2 items-end">
+                    <button
+                      onClick={() => toggleAvailable(product)}
+                      className={`text-xs px-2 py-0.5 border ${product.available ? "border-emerald-500/30 text-emerald-400" : "border-red-500/30 text-red-400"}`}
+                    >
+                      {product.available ? "Активен" : "Скрит"}
+                    </button>
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditProduct(product)} className="text-[#F5ECD7]/40 hover:text-[#C9A84C]">
+                        <Pencil size={14} />
+                      </button>
+                      <button onClick={() => deleteProduct(product.id)} className="text-[#F5ECD7]/40 hover:text-red-400">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {products.length === 0 && (
+                <div className="text-center py-10 text-[#F5ECD7]/20">Няма добавени продукти.</div>
+              )}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block bg-[#161410] border border-[#2A2418] overflow-hidden">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#2A2418]">
@@ -186,8 +267,8 @@ export default function AdminDashboardClient({
                             )}
                           </div>
                           <div>
-                            <p className="text-[#F5ECD7] text-sm">{product.nameBg || product.name}</p>
-                            <p className="text-[#F5ECD7]/30 text-xs">{product.name}</p>
+                            <p className="text-[#F5ECD7] text-sm">{product.name}</p>
+                            <p className="text-[#F5ECD7]/30 text-xs">{product.nameBg}</p>
                           </div>
                         </div>
                       </td>
@@ -223,18 +304,18 @@ export default function AdminDashboardClient({
                       </td>
                     </tr>
                   ))}
+                  {products.length === 0 && (
+                    <tr><td colSpan={6} className="text-center py-16 text-[#F5ECD7]/20">Няма добавени продукти.</td></tr>
+                  )}
                 </tbody>
               </table>
-              {products.length === 0 && (
-                <div className="text-center py-16 text-[#F5ECD7]/20">Няма добавени продукти.</div>
-              )}
             </div>
           </div>
         )}
 
         {tab === "requests" && (
-          <div className="p-8">
-            <div className="mb-8">
+          <div className="p-4 md:p-8">
+            <div className="hidden md:block mb-8">
               <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Заявки за покупка</h1>
               <p className="text-[#F5ECD7]/30 text-sm mt-1">{requests.length} общо заявки</p>
             </div>
@@ -243,7 +324,7 @@ export default function AdminDashboardClient({
               {requests.map(req => {
                 const items = req.items as { name: string; nameBg: string; volume: string; price: number }[];
                 return (
-                  <div key={req.id} className="bg-[#161410] border border-[#2A2418] p-6">
+                  <div key={req.id} className="bg-[#161410] border border-[#2A2418] p-4 md:p-6">
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div>
                         <p className="text-[#F5ECD7] font-medium">{req.name}</p>
@@ -275,7 +356,7 @@ export default function AdminDashboardClient({
                       <p className="text-xs text-[#C9A84C] tracking-widest uppercase mb-2">Артикули</p>
                       {items.map((item, i) => (
                         <div key={i} className="flex justify-between text-sm py-1">
-                          <span className="text-[#F5ECD7]/70">{item.nameBg || item.name} — {item.volume}</span>
+                          <span className="text-[#F5ECD7]/70">{item.name} — {item.volume}</span>
                           <span className="text-[#C9A84C]">{formatPrice(item.price)}</span>
                         </div>
                       ))}

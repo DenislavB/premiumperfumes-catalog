@@ -42,17 +42,17 @@ export default function CatalogClient({ products, locale }: { products: Product[
             <div className="h-px w-16 bg-gradient-to-l from-transparent to-[#C9A84C]" />
           </div>
           <h1
-            className="text-5xl md:text-7xl text-gradient-gold leading-tight mb-6"
+            className="text-4xl md:text-7xl text-gradient-gold leading-tight mb-6"
             style={{ fontFamily: "var(--font-playfair)" }}
           >
             {t("hero.tagline")}
           </h1>
-          <p className="text-[#F5ECD7]/60 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-10">
+          <p className="text-[#F5ECD7]/60 text-base md:text-xl max-w-2xl mx-auto leading-relaxed mb-10 px-2">
             {t("hero.subtitle")}
           </p>
           <a
             href="#catalog"
-            className="inline-flex items-center gap-3 border border-[#C9A84C]/50 text-[#C9A84C] px-8 py-3.5 text-xs tracking-widest uppercase hover:bg-[#C9A84C]/10 transition-all duration-300"
+            className="inline-flex items-center gap-3 border border-[#C9A84C]/50 text-[#C9A84C] px-6 py-3 text-xs tracking-widest uppercase hover:bg-[#C9A84C]/10 transition-all duration-300"
           >
             {t("hero.cta")}
             <span className="text-lg">↓</span>
@@ -78,12 +78,12 @@ export default function CatalogClient({ products, locale }: { products: Product[
           </div>
 
           {/* Filters */}
-          <div className="flex flex-wrap justify-center gap-2 mb-12">
+          <div className="flex overflow-x-auto md:flex-wrap md:justify-center gap-2 mb-12 pb-1 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-hide">
             {FILTERS.map(f => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`text-xs tracking-widest uppercase px-5 py-2 border transition-all duration-300 ${
+                className={`flex-shrink-0 text-xs tracking-widest uppercase px-5 py-2 border transition-all duration-300 ${
                   filter === f
                     ? "bg-[#C9A84C] text-[#0D0B08] border-[#C9A84C]"
                     : "border-[#2A2418] text-[#F5ECD7]/50 hover:border-[#C9A84C]/40 hover:text-[#C9A84C]"

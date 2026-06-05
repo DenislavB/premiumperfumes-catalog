@@ -147,7 +147,7 @@ export default function ProductFormModal({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
       <div className="absolute inset-0 bg-[#0D0B08]/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#161410] border-l border-[#2A2418] w-full max-w-2xl h-full overflow-y-auto">
+      <div className="relative bg-[#161410] border-l border-[#2A2418] w-full md:max-w-2xl h-full overflow-y-auto">
 
         {/* Header */}
         <div className="sticky top-0 bg-[#161410] border-b border-[#2A2418] px-6 py-4 flex items-center justify-between z-10">

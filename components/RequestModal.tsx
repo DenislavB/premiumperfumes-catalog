@@ -43,7 +43,7 @@ export default function RequestModal({ item, onClose }: { item: RequestItem | nu
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-[#0D0B08]/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#161410] border border-[#C9A84C]/30 w-full max-w-lg" style={{ animation: "slideUp 0.3s ease-out" }}>
+      <div className="relative bg-[#161410] border border-[#C9A84C]/30 w-full max-w-lg mx-2 md:mx-0 max-h-[90vh] overflow-y-auto" style={{ animation: "slideUp 0.3s ease-out" }}>
         <div className="border-b border-[#2A2418] px-6 py-5 flex items-start justify-between">
           <div>
             <h2 className="text-lg text-gradient-gold" style={{ fontFamily: "var(--font-playfair)" }}>
