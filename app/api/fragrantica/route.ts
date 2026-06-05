@@ -150,32 +150,45 @@ Respond ONLY with valid JSON, no markdown, no explanation:
     // Grok failed
   }
 
-  // Try to scrape images from the official product URL
+  // Step 1: Serper.dev Google Image Search (primary)
   let images: string[] = [];
 
-  if (productUrl && productUrl.startsWith("http")) {
-    images = await scrapeImagesFromUrl(productUrl);
-  }
-
-  // Fallback: try the known brand website
-  if (images.length === 0) {
-    const brandKey = brand.toLowerCase();
-    const brandSite = Object.entries(BRAND_SITES).find(([key]) => brandKey.includes(key))?.[1];
-    if (brandSite) {
-      const searchUrl = `https://${brandSite}/search?q=${encodeURIComponent(name)}`;
-      images = await scrapeImagesFromUrl(searchUrl);
-    }
-  }
-
-  // Fallback: try Fragrantica search
-  if (images.length === 0) {
+  if (process.env.SERPER_API_KEY) {
     try {
-      const fragUrl = `https://www.fragrantica.com/search/?query=${encodeURIComponent(`${brand} ${name}`)}`;
-      const fragImages = await scrapeImagesFromUrl(fragUrl);
-      images = fragImages;
+      const query = `${brand} ${name} perfume bottle official`;
+      const serperRes = await fetch("https://google.serper.dev/images", {
+        method: "POST",
+        headers: {
+          "X-API-KEY": process.env.SERPER_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ q: query, num: 10 }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (serperRes.ok) {
+        const serperData = await serperRes.json();
+        for (const item of serperData.images || []) {
+          const imgUrl: string = item.imageUrl || "";
+          if (
+            imgUrl &&
+            imgUrl.startsWith("http") &&
+            /\.(jpg|jpeg|png|webp)/i.test(imgUrl) &&
+            !imgUrl.endsWith(".svg") &&
+            !images.includes(imgUrl) &&
+            images.length < 5
+          ) {
+            images.push(imgUrl);
+          }
+        }
+      }
     } catch {
-      // ignore
+      // Serper failed
     }
+  }
+
+  // Fallback: scrape official product URL if Grok found one
+  if (images.length === 0 && productUrl && productUrl.startsWith("http")) {
+    images = await scrapeImagesFromUrl(productUrl);
   }
 
   // Final fallback: Pexels
@@ -184,10 +197,7 @@ Respond ONLY with valid JSON, no markdown, no explanation:
       const query = `${brand} ${name} perfume bottle`;
       const pexelsRes = await fetch(
         `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=5&orientation=portrait`,
-        {
-          headers: { Authorization: process.env.PEXELS_API_KEY },
-          signal: AbortSignal.timeout(8000),
-        }
+        { headers: { Authorization: process.env.PEXELS_API_KEY }, signal: AbortSignal.timeout(8000) }
       );
       if (pexelsRes.ok) {
         const pexelsData = await pexelsRes.json();
