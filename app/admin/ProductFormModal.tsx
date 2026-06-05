@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Plus, Minus } from "lucide-react";
+import { X, Plus, Minus, Download } from "lucide-react";
 
 type Product = {
   id: string;
@@ -59,8 +59,48 @@ export default function ProductFormModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  // Fragrantica import
+  const [fragUrl, setFragUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState("");
+
   const f = (key: keyof typeof form, val: unknown) =>
     setForm(prev => ({ ...prev, [key]: val }));
+
+  const importFromFragrantica = async () => {
+    if (!fragUrl.trim()) return;
+    setImporting(true);
+    setImportMsg("");
+    try {
+      const res = await fetch("/api/fragrantica", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: fragUrl.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to import");
+
+      // Auto-fill fields
+      if (data.name) f("name", data.name);
+      if (data.brand) f("brand", data.brand);
+      if (data.description) f("description", data.description);
+      if (data.gender) f("gender", data.gender);
+      if (data.image) {
+        setForm(prev => ({
+          ...prev,
+          ...(data.name && { name: data.name }),
+          ...(data.brand && { brand: data.brand }),
+          ...(data.description && { description: data.description }),
+          ...(data.gender && { gender: data.gender }),
+          images: data.image ? [...prev.images, data.image].filter((v, i, a) => a.indexOf(v) === i) : prev.images,
+        }));
+      }
+      setImportMsg("✓ Imported successfully! Review and fill in the remaining fields.");
+    } catch (err) {
+      setImportMsg(`✗ ${String(err)}`);
+    }
+    setImporting(false);
+  };
 
   const addImage = () => {
     if (imgUrl.trim()) {
@@ -92,18 +132,6 @@ export default function ProductFormModal({
     setSaving(false);
   };
 
-  const input = (label: string, key: keyof typeof form, type = "text", half = false) => (
-    <div className={half ? "" : "col-span-2"}>
-      <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">{label}</label>
-      <input
-        type={type}
-        value={form[key] as string}
-        onChange={e => f(key, e.target.value)}
-        className="w-full px-3 py-2 text-sm rounded-none"
-      />
-    </div>
-  );
-
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
       <div className="absolute inset-0 bg-[#0D0B08]/60 backdrop-blur-sm" onClick={onClose} />
@@ -118,6 +146,40 @@ export default function ProductFormModal({
         </div>
 
         <form onSubmit={save} className="p-6">
+
+          {/* Fragrantica Import */}
+          <div className="mb-6 p-4 border border-[#C9A84C]/20 bg-[#C9A84C]/5">
+            <p className="text-xs text-[#C9A84C] tracking-widest uppercase mb-3 flex items-center gap-2">
+              <Download size={12} />
+              Import from Fragrantica
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={fragUrl}
+                onChange={e => setFragUrl(e.target.value)}
+                placeholder="https://www.fragrantica.com/perfume/..."
+                className="flex-1 px-3 py-2 text-sm rounded-none"
+              />
+              <button
+                type="button"
+                onClick={importFromFragrantica}
+                disabled={importing || !fragUrl.trim()}
+                className="bg-[#C9A84C] text-[#0D0B08] px-4 py-2 text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors disabled:opacity-40"
+              >
+                {importing ? "..." : "Import"}
+              </button>
+            </div>
+            {importMsg && (
+              <p className={`text-xs mt-2 ${importMsg.startsWith("✓") ? "text-emerald-400" : "text-red-400"}`}>
+                {importMsg}
+              </p>
+            )}
+            <p className="text-[#F5ECD7]/30 text-xs mt-2">
+              Paste a Fragrantica product page URL to auto-fill name, brand, description, gender and image.
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             {/* Names */}
             <div>
@@ -168,11 +230,11 @@ export default function ProductFormModal({
             {/* Descriptions */}
             <div className="col-span-2">
               <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Description (EN)</label>
-              <textarea rows={3} value={form.description} onChange={e => f("description", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none resize-none" />
+              <textarea rows={4} value={form.description} onChange={e => f("description", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none resize-none" />
             </div>
             <div className="col-span-2">
               <label className="text-xs text-[#F5ECD7]/40 tracking-widest uppercase block mb-1.5">Description (BG)</label>
-              <textarea rows={3} value={form.descriptionBg} onChange={e => f("descriptionBg", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none resize-none" />
+              <textarea rows={4} value={form.descriptionBg} onChange={e => f("descriptionBg", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none resize-none" />
             </div>
 
             {/* Images */}
