@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local one-off scripts (contain API keys)
+import.mjs
+fix-prices.mjs
+fix-afnan.mjs
+seed.mjs
