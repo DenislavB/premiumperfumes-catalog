@@ -36,7 +36,7 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
 
   const name = product.name; // Always English
   const description = locale === "bg" ? product.descriptionBg : product.description;
-  const isOutOfStock = !product.available || product.quantity === 0;
+  const isOutOfStock = !product.available;
 
   const genderLabel = product.gender === "Men"
     ? (locale === "bg" ? "Мъже" : "Men")
@@ -119,13 +119,20 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
                   [t("product.brand"), product.brand],
                   [t("product.volume"), product.volume],
                   [t("product.gender"), genderLabel],
-                  [t("product.quantity"), `${product.quantity} ${t("product.units")}`],
                 ].map(([label, value]) => (
                   <div key={label}>
                     <p className="text-[#F5ECD7]/30 text-xs tracking-wider uppercase mb-1">{label}</p>
                     <p className="text-[#F5ECD7] text-sm">{value}</p>
                   </div>
                 ))}
+                <div>
+                  <p className="text-[#F5ECD7]/30 text-xs tracking-wider uppercase mb-1">{t("product.quantity")}</p>
+                  <p className={`text-sm ${isOutOfStock ? "text-[#F5ECD7]/40" : "text-emerald-400"}`}>
+                    {isOutOfStock
+                      ? (locale === "bg" ? "Изчерпан" : "Out of stock")
+                      : (locale === "bg" ? "В наличност" : "In stock")}
+                  </p>
+                </div>
               </div>
 
               <button

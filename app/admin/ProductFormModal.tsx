@@ -249,12 +249,6 @@ export default function ProductFormModal({
               </select>
             </div>
 
-            {/* Quantity */}
-            <div>
-              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Количество</label>
-              <input type="number" min="0" value={form.quantity} onChange={e => f("quantity", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
-            </div>
-
             {/* Prices */}
             <div>
               <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Цена (лв.) *</label>

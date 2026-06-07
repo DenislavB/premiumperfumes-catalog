@@ -24,6 +24,8 @@ type Product = {
   available: boolean;
   description: string;
   descriptionBg: string;
+  notes: string;
+  notesBg: string;
 };
 
 type Request = {
@@ -217,7 +219,7 @@ export default function AdminDashboardClient({
                   <div className="flex-1 min-w-0">
                     <p className="text-[#F5ECD7] text-sm truncate">{product.name}</p>
                     <p className="text-[#C9A84C] text-xs">{formatPrice(product.price)}</p>
-                    <p className="text-[#F5ECD7]/30 text-xs">{product.brand} · {product.quantity} бр.</p>
+                    <p className="text-[#F5ECD7]/30 text-xs">{product.brand}</p>
                   </div>
                   <div className="flex flex-col gap-2 items-end">
                     <button
@@ -247,7 +249,7 @@ export default function AdminDashboardClient({
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[#2A2418]">
-                    {["Продукт", "Марка", "Цена", "Наличност", "Статус", "Действия"].map(h => (
+                    {["Продукт", "Марка", "Цена", "Статус", "Действия"].map(h => (
                       <th key={h} className="text-left text-xs text-[#F5ECD7]/30 tracking-widest uppercase px-4 py-3 font-normal">
                         {h}
                       </th>
@@ -279,7 +281,6 @@ export default function AdminDashboardClient({
                           <span className="ml-2 text-xs bg-[#C9A84C]/20 text-[#C9A84C] px-1.5 py-0.5">-{product.discountPct}%</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-[#F5ECD7]/60 text-sm">{product.quantity} бр.</td>
                       <td className="px-4 py-3">
                         <button
                           onClick={() => toggleAvailable(product)}
