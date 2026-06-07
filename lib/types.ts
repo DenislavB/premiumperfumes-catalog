@@ -1,3 +1,8 @@
+export type Variant = {
+  size: string;
+  price: number;
+};
+
 export type Product = {
   id: string;
   slug: string;
@@ -14,6 +19,7 @@ export type Product = {
   images: string[];
   notes: string;
   notesBg: string;
+  variants: Variant[];
   featured: boolean;
   inPromotion: boolean;
   discountPct: number | null;

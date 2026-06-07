@@ -26,6 +26,7 @@ type Product = {
   descriptionBg: string;
   notes: string;
   notesBg: string;
+  variants: { size: string; price: number }[];
 };
 
 type Request = {

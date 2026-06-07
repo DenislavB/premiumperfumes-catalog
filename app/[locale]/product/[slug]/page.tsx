@@ -13,9 +13,11 @@ export default async function ProductPage({
 
   const serialized = {
     ...product,
+    variants: Array.isArray(product.variants) ? product.variants : [],
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
   };
 
-  return <ProductDetailClient product={serialized} locale={locale} />;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return <ProductDetailClient product={serialized as any} locale={locale} />;
 }

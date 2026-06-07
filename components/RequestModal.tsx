@@ -4,22 +4,31 @@ import { useTranslations, useLocale } from "next-intl";
 import { useState } from "react";
 import { X } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+type Variant = { size: string; price: number };
+
 type RequestItem = {
   id: string;
   name: string;
   nameBg: string;
   volume: string;
   price: number;
+  variants?: Variant[];
 };
 
-export default function RequestModal({ item, onClose }: { item: RequestItem | null; onClose: () => void }) {
+export default function RequestModal({ item, onClose, initialVariant = 0 }: { item: RequestItem | null; onClose: () => void; initialVariant?: number }) {
   const t = useTranslations("request");
   const locale = useLocale();
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
+  const hasVariants = !!(item?.variants && item.variants.length > 0);
+  const [selectedVariant, setSelectedVariant] = useState(initialVariant);
+
   if (!item) return null;
   const itemName = locale === "bg" ? item.nameBg : item.name;
+
+  const chosenSize = hasVariants ? item.variants![selectedVariant].size : item.volume;
+  const chosenPrice = hasVariants ? item.variants![selectedVariant].price : item.price;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +39,7 @@ export default function RequestModal({ item, onClose }: { item: RequestItem | nu
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          items: [{ productId: item.id, name: item.name, nameBg: item.nameBg, volume: item.volume, price: item.price }],
+          items: [{ productId: item.id, name: item.name, nameBg: item.nameBg, volume: chosenSize, price: chosenPrice }],
         }),
       });
       if (!res.ok) throw new Error();
@@ -57,10 +66,33 @@ export default function RequestModal({ item, onClose }: { item: RequestItem | nu
         </div>
 
         <div className="px-6 py-4 border-b border-[#2A2418] bg-[#0D0B08]/30">
-          <p className="text-xs text-[#C9A84C] tracking-widest uppercase mb-1">{t("items")}</p>
+          <p className="text-xs text-[#C9A84C] tracking-widest uppercase mb-2">{t("items")}</p>
+
+          {hasVariants && (
+            <div className="mb-3">
+              <p className="text-xs text-[#F5ECD7]/40 mb-1.5">{locale === "bg" ? "Изберете размер:" : "Choose size:"}</p>
+              <div className="flex flex-wrap gap-2">
+                {item.variants!.map((v, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedVariant(i)}
+                    className={`text-xs px-3 py-1.5 border transition-colors ${
+                      selectedVariant === i
+                        ? "bg-[#C9A84C] text-[#0D0B08] border-[#C9A84C]"
+                        : "border-[#2A2418] text-[#F5ECD7]/60 hover:border-[#C9A84C]/50"
+                    }`}
+                  >
+                    {v.size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-between items-center">
-            <span className="text-[#F5ECD7] text-sm">{itemName} — {item.volume}</span>
-            <span className="text-[#C9A84C] font-semibold">{formatPrice(item.price)}</span>
+            <span className="text-[#F5ECD7] text-sm">{itemName} — {chosenSize}</span>
+            <span className="text-[#C9A84C] font-semibold">{formatPrice(chosenPrice)}</span>
           </div>
         </div>
 

@@ -23,6 +23,7 @@ type Product = {
   images: string[];
   notes: string;
   notesBg: string;
+  variants: { size: string; price: number }[];
   inPromotion: boolean;
   discountPct: number | null;
   featured: boolean;
@@ -34,9 +35,14 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
   const [imgIdx, setImgIdx] = useState(0);
   const [showModal, setShowModal] = useState(false);
 
+  const hasVariants = product.variants && product.variants.length > 0;
+  const [selectedVariant, setSelectedVariant] = useState(0);
+
   const name = product.name; // Always English
   const description = locale === "bg" ? product.descriptionBg : product.description;
   const isOutOfStock = !product.available;
+
+  const displayPrice = hasVariants ? product.variants[selectedVariant].price : product.price;
 
   const genderLabel = product.gender === "Men"
     ? (locale === "bg" ? "Мъже" : "Men")
@@ -98,15 +104,41 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
               <h1 className="text-4xl text-[#F5ECD7] leading-tight mb-2" style={{ fontFamily: "var(--font-playfair)" }}>
                 {name}
               </h1>
-              <p className="text-[#F5ECD7]/40 text-sm mb-8">{product.volume} · {genderLabel}</p>
+              <p className="text-[#F5ECD7]/40 text-sm mb-8">
+                {hasVariants ? product.variants.map(v => v.size).join(" · ") : product.volume} · {genderLabel}
+              </p>
+
+              {/* Size selector */}
+              {hasVariants && (
+                <div className="mb-6">
+                  <p className="text-xs text-[#C9A84C] tracking-widest uppercase mb-2">
+                    {locale === "bg" ? "Размер" : "Size"}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {product.variants.map((v, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedVariant(i)}
+                        className={`text-sm px-4 py-2 border transition-colors ${
+                          selectedVariant === i
+                            ? "bg-[#C9A84C] text-[#0D0B08] border-[#C9A84C]"
+                            : "border-[#2A2418] text-[#F5ECD7]/60 hover:border-[#C9A84C]/50"
+                        }`}
+                      >
+                        {v.size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-baseline gap-3 mb-2">
-                <span className="text-3xl text-[#C9A84C] font-semibold">{formatPrice(product.price)}</span>
-                {product.originalPrice && product.originalPrice > product.price && (
+                <span className="text-3xl text-[#C9A84C] font-semibold">{formatPrice(displayPrice)}</span>
+                {!hasVariants && product.originalPrice && product.originalPrice > product.price && (
                   <span className="text-[#F5ECD7]/30 text-lg line-through">{formatPrice(product.originalPrice)}</span>
                 )}
               </div>
-              {product.inPromotion && product.discountPct && (
+              {!hasVariants && product.inPromotion && product.discountPct && (
                 <p className="text-[#C9A84C]/70 text-xs tracking-wider mb-6">
                   ★ {t("product.save", { pct: product.discountPct })}
                 </p>
@@ -171,7 +203,7 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
         </div>
       </div>
 
-      {showModal && <RequestModal item={product} onClose={() => setShowModal(false)} />}
+      {showModal && <RequestModal item={product} initialVariant={selectedVariant} onClose={() => setShowModal(false)} />}
     </>
   );
 }

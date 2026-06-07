@@ -9,7 +9,11 @@ export default function ProductCard({ product, onRequest }: { product: Product; 
   const t = useTranslations("catalog");
   const locale = useLocale();
   const name = product.name; // Always English
-  const isOutOfStock = !product.available || product.quantity === 0;
+  const isOutOfStock = !product.available;
+  const hasVariants = product.variants && product.variants.length > 0;
+  const minVariantPrice = hasVariants
+    ? Math.min(...product.variants.map(v => v.price))
+    : product.price;
 
   return (
     <div className="group relative bg-[#161410] border border-[#2A2418] hover:border-[#C9A84C]/50 transition-all duration-500 overflow-hidden">
@@ -67,9 +71,17 @@ export default function ProductCard({ product, onRequest }: { product: Product; 
         )}
 
         <div className="flex items-baseline gap-2 mb-4">
-          <span className="text-[#C9A84C] text-lg font-semibold">{formatPrice(product.price)}</span>
-          {product.originalPrice && product.originalPrice > product.price && (
-            <span className="text-[#F5ECD7]/30 text-sm line-through">{formatPrice(product.originalPrice)}</span>
+          {hasVariants ? (
+            <span className="text-[#C9A84C] text-lg font-semibold">
+              {locale === "bg" ? "от " : "from "}{formatPrice(minVariantPrice)}
+            </span>
+          ) : (
+            <>
+              <span className="text-[#C9A84C] text-lg font-semibold">{formatPrice(product.price)}</span>
+              {product.originalPrice && product.originalPrice > product.price && (
+                <span className="text-[#F5ECD7]/30 text-sm line-through">{formatPrice(product.originalPrice)}</span>
+              )}
+            </>
           )}
         </div>
 

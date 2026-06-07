@@ -23,6 +23,7 @@ type Product = {
   descriptionBg: string;
   notes: string;
   notesBg: string;
+  variants: { size: string; price: number }[];
 };
 
 const empty = {
@@ -63,6 +64,18 @@ export default function ProductFormModal({
   const [imgUrl, setImgUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Size variants
+  const initialVariants = product?.variants && product.variants.length > 0
+    ? product.variants.map(v => ({ size: v.size, price: String(v.price) }))
+    : [];
+  const [hasVariants, setHasVariants] = useState(initialVariants.length > 0);
+  const [variants, setVariants] = useState<{ size: string; price: string }[]>(initialVariants);
+
+  const addVariant = () => setVariants(v => [...v, { size: "", price: "" }]);
+  const removeVariant = (i: number) => setVariants(v => v.filter((_, idx) => idx !== i));
+  const updateVariant = (i: number, field: "size" | "price", value: string) =>
+    setVariants(v => v.map((row, idx) => idx === i ? { ...row, [field]: value } : row));
 
   // Auto-search state
   const [searching, setSearching] = useState(false);
@@ -127,13 +140,31 @@ export default function ProductFormModal({
     e.preventDefault();
     setSaving(true);
     setError("");
+
+    // Build clean variants array
+    const cleanVariants = hasVariants
+      ? variants
+          .filter(v => v.size.trim() && v.price.trim())
+          .map(v => ({ size: v.size.trim(), price: parseFloat(v.price) }))
+      : [];
+
+    // If using variants, set the base price to the lowest variant price (for sorting / "from X" display)
+    const payload = {
+      ...form,
+      variants: cleanVariants,
+      ...(cleanVariants.length > 0 && {
+        price: Math.min(...cleanVariants.map(v => v.price)),
+        volume: cleanVariants.map(v => v.size).join(" / "),
+      }),
+    };
+
     try {
       const url = isEdit ? `/api/products/${product.id}` : "/api/products";
       const method = isEdit ? "PATCH" : "POST";
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(await res.text());
       const saved = await res.json();
@@ -175,10 +206,12 @@ export default function ProductFormModal({
               <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Производител *</label>
               <input required value={form.brand} onChange={e => f("brand", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. Lattafa" />
             </div>
-            <div>
-              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Обем *</label>
-              <input required value={form.volume} onChange={e => f("volume", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. 100ml" />
-            </div>
+            {!hasVariants && (
+              <div>
+                <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Обем *</label>
+                <input required value={form.volume} onChange={e => f("volume", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. 100ml" />
+              </div>
+            )}
 
             {/* Auto-search button */}
             <div className="col-span-2">
@@ -249,15 +282,79 @@ export default function ProductFormModal({
               </select>
             </div>
 
-            {/* Prices */}
-            <div>
-              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Цена (лв.) *</label>
-              <input required type="number" step="0.01" min="0" value={form.price} onChange={e => f("price", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
+            {/* Multi-size toggle */}
+            <div className="col-span-2 p-4 border border-[#C9A84C]/20 bg-[#C9A84C]/5">
+              <label className="flex items-center gap-2 cursor-pointer mb-1">
+                <input
+                  type="checkbox"
+                  checked={hasVariants}
+                  onChange={e => {
+                    setHasVariants(e.target.checked);
+                    if (e.target.checked && variants.length === 0) {
+                      setVariants([{ size: "", price: "" }]);
+                    }
+                  }}
+                  className="w-4 h-4 accent-[#C9A84C]"
+                />
+                <span className="text-sm text-[#F5ECD7] font-medium">Различни разфасовки (размери)</span>
+              </label>
+              <p className="text-[#F5ECD7]/30 text-xs ml-6">
+                Включете, ако този парфюм се предлага в няколко размера с различни цени. Клиентът ще избира размер преди заявка.
+              </p>
+
+              {hasVariants && (
+                <div className="mt-4 flex flex-col gap-2">
+                  {variants.map((v, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input
+                        value={v.size}
+                        onChange={e => updateVariant(i, "size", e.target.value)}
+                        placeholder="Размер (напр. 60ml)"
+                        className="flex-1 px-3 py-2 text-sm rounded-none"
+                      />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={v.price}
+                        onChange={e => updateVariant(i, "price", e.target.value)}
+                        placeholder="Цена €"
+                        className="w-28 px-3 py-2 text-sm rounded-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeVariant(i)}
+                        className="text-[#F5ECD7]/40 hover:text-red-400 p-1"
+                        title="Премахни"
+                      >
+                        <Minus size={16} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addVariant}
+                    className="flex items-center gap-1.5 text-xs text-[#C9A84C] hover:text-[#E8D5A3] mt-1"
+                  >
+                    <Plus size={14} /> Добави размер
+                  </button>
+                </div>
+              )}
             </div>
-            <div>
-              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Стара цена (зачертана)</label>
-              <input type="number" step="0.01" min="0" value={form.originalPrice} onChange={e => f("originalPrice", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
-            </div>
+
+            {/* Single price (only when no variants) */}
+            {!hasVariants && (
+              <>
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Цена (€) *</label>
+                  <input required type="number" step="0.01" min="0" value={form.price} onChange={e => f("price", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Стара цена (зачертана)</label>
+                  <input type="number" step="0.01" min="0" value={form.originalPrice} onChange={e => f("originalPrice", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" />
+                </div>
+              </>
+            )}
 
             {/* Descriptions */}
             <div className="col-span-2">

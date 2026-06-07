@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
       originalPrice: body.originalPrice ? parseFloat(body.originalPrice) : null,
       quantity: parseInt(body.quantity) || 0,
       images: body.images || [],
+      variants: Array.isArray(body.variants) ? body.variants : [],
       notes: body.notes || "",
       notesBg: body.notesBg || "",
       featured: body.featured || false,

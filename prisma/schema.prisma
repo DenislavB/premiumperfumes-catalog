@@ -22,6 +22,8 @@ model Product {
   images        String[]
   notes         String   @default("")
   notesBg       String   @default("")
+  variants      Json     @default("[]") // [{ size: "100ml", price: 35 }] — empty = single size
+
   featured      Boolean  @default(false)
   inPromotion   Boolean  @default(false)
   discountPct   Int?

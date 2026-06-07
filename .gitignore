@@ -40,8 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local one-off scripts (contain API keys)
+# local one-off scripts (contain API keys / DB urls)
 import.mjs
 fix-prices.mjs
 fix-afnan.mjs
 seed.mjs
+merge-variants.mjs
+check-names.mjs
