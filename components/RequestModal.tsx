@@ -1,9 +1,11 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
+
+type EcontOffice = { id: string; name: string; city: string; address: string };
 type Variant = { size: string; price: number };
 
 type RequestItem = {
@@ -23,6 +25,27 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
 
   const hasVariants = !!(item?.variants && item.variants.length > 0);
   const [selectedVariant, setSelectedVariant] = useState(initialVariant);
+
+  // Econt office picker
+  const [econtOffices, setEcontOffices] = useState<EcontOffice[]>([]);
+  const [officeSearch, setOfficeSearch] = useState("");
+  const [showOfficeList, setShowOfficeList] = useState(false);
+
+  useEffect(() => {
+    if (form.courier === "Econt" && econtOffices.length === 0) {
+      fetch("/api/econt-offices")
+        .then(r => r.json())
+        .then(d => { if (Array.isArray(d)) setEcontOffices(d); })
+        .catch(() => {});
+    }
+  }, [form.courier, econtOffices.length]);
+
+  const filteredOffices = officeSearch.trim()
+    ? econtOffices.filter(o => {
+        const q = officeSearch.toLowerCase();
+        return o.city.toLowerCase().includes(q) || o.name.toLowerCase().includes(q) || o.address.toLowerCase().includes(q);
+      }).slice(0, 50)
+    : econtOffices.slice(0, 50);
 
   if (!item) return null;
   const itemName = locale === "bg" ? item.nameBg : item.name;
@@ -121,15 +144,79 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
               </div>
               <div>
                 <label className="text-xs text-[#F5ECD7]/50 tracking-wider uppercase block mb-1.5">{t("courier")} *</label>
-                <select required value={form.courier} onChange={e => setForm(f => ({ ...f, courier: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none">
+                <select
+                  required
+                  value={form.courier}
+                  onChange={e => {
+                    setForm(f => ({ ...f, courier: e.target.value, address: "" }));
+                    setOfficeSearch("");
+                    setShowOfficeList(false);
+                  }}
+                  className="w-full px-3 py-2.5 text-sm rounded-none"
+                >
                   <option value="">{t("courierHint")}</option>
                   <option value="Speedy">Speedy</option>
                   <option value="Econt">Econt</option>
                 </select>
               </div>
-              <div>
+
+              {/* Address — Econt searchable office list, Speedy free text */}
+              <div className="col-span-2 relative">
                 <label className="text-xs text-[#F5ECD7]/50 tracking-wider uppercase block mb-1.5">{t("address")} *</label>
-                <input required value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none" placeholder={locale === "bg" ? "Град, офис / адрес" : "City, office / address"} />
+
+                {form.courier === "Econt" ? (
+                  <>
+                    <input
+                      required
+                      value={form.address || officeSearch}
+                      onChange={e => {
+                        setOfficeSearch(e.target.value);
+                        setForm(f => ({ ...f, address: "" }));
+                        setShowOfficeList(true);
+                      }}
+                      onFocus={() => setShowOfficeList(true)}
+                      placeholder={locale === "bg" ? "Търсете по град или офис..." : "Search by city or office..."}
+                      className="w-full px-3 py-2.5 text-sm rounded-none"
+                    />
+                    {showOfficeList && !form.address && (
+                      <div className="absolute z-20 left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-[#1A1612] border border-[#C9A84C]/30">
+                        {econtOffices.length === 0 ? (
+                          <p className="px-3 py-2 text-xs text-[#F5ECD7]/40">{locale === "bg" ? "Зареждане..." : "Loading..."}</p>
+                        ) : filteredOffices.length === 0 ? (
+                          <p className="px-3 py-2 text-xs text-[#F5ECD7]/40">{locale === "bg" ? "Няма резултати" : "No results"}</p>
+                        ) : (
+                          filteredOffices.map(o => (
+                            <button
+                              key={o.id}
+                              type="button"
+                              onClick={() => {
+                                setForm(f => ({ ...f, address: `${o.city}: ${o.name} — ${o.address}` }));
+                                setShowOfficeList(false);
+                              }}
+                              className="w-full text-left px-3 py-2 text-xs text-[#F5ECD7]/80 hover:bg-[#C9A84C]/10 border-b border-[#2A2418]/50"
+                            >
+                              <span className="text-[#C9A84C]">{o.city}</span> · {o.name}
+                              <span className="block text-[#F5ECD7]/40">{o.address}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <input
+                    required
+                    value={form.address}
+                    onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+                    className="w-full px-3 py-2.5 text-sm rounded-none"
+                    placeholder={
+                      form.courier === "Speedy"
+                        ? (locale === "bg" ? "Град и офис на Speedy" : "City and Speedy office")
+                        : (locale === "bg" ? "Първо изберете куриер" : "Choose a courier first")
+                    }
+                    disabled={!form.courier}
+                  />
+                )}
               </div>
               <div className="col-span-2">
                 <label className="text-xs text-[#F5ECD7]/50 tracking-wider uppercase block mb-1.5">{t("message")}</label>
