@@ -5,6 +5,7 @@ import { useState } from "react";
 import ProductCard from "@/components/ProductCard";
 import RequestModal from "@/components/RequestModal";
 import ContactForm from "@/components/ContactForm";
+import PromoSection from "@/components/PromoSection";
 import type { Product } from "@/lib/types";
 
 const FILTERS = ["all", "Men", "Women", "Unisex", "featured", "promotions"] as const;
@@ -60,6 +61,9 @@ export default function CatalogClient({ products, locale }: { products: Product[
           </a>
         </div>
       </section>
+
+      {/* Promo / Featured */}
+      <PromoSection products={products} onRequest={p => setRequestItem(p)} />
 
       {/* Catalog */}
       <section id="catalog" className="py-24 px-6">

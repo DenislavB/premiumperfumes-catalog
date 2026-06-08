@@ -29,6 +29,45 @@ body {
   background-clip: text;
 }
 
+/* ===== Promo / featured section ===== */
+
+/* Gentle back-and-forth pulse on the featured cards */
+@keyframes promoPulse {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-6px) scale(1.025); }
+}
+.promo-pulse {
+  animation: promoPulse 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Breathing Arabian golden light behind each card */
+@keyframes promoGlow {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.12); }
+}
+.promo-glow {
+  background: radial-gradient(circle at center, rgba(201,168,76,0.55) 0%, rgba(201,168,76,0.18) 40%, transparent 70%);
+  animation: promoGlow 5s ease-in-out infinite;
+  will-change: opacity, transform;
+  filter: blur(36px);
+}
+
+/* Slow shimmer sweeping across the gold frame */
+@keyframes promoShimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.promo-shimmer {
+  background: linear-gradient(110deg, transparent 25%, rgba(232,213,163,0.5) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: promoShimmer 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-pulse, .promo-glow, .promo-shimmer { animation: none; }
+}
+
 /* Admin form inputs — clearly visible against dark background */
 input:not([type="checkbox"]):not([type="radio"]),
 textarea,
