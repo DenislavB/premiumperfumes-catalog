@@ -47,3 +47,4 @@ fix-afnan.mjs
 seed.mjs
 merge-variants.mjs
 check-names.mjs
+add-testers.mjs

@@ -4,14 +4,22 @@ import { getSession } from "@/lib/session";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { name, email, phone, message, items } = body;
+  const { name, email, phone, courier, address, message, items } = body;
 
-  if (!name || !email || !items?.length) {
+  if (!name || !phone || !items?.length) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
   const request = await prisma.purchaseRequest.create({
-    data: { name, email, phone: phone || null, message: message || null, items },
+    data: {
+      name,
+      email: email || null,
+      phone,
+      courier: courier || null,
+      address: address || null,
+      message: message || null,
+      items,
+    },
   });
 
   return NextResponse.json(request, { status: 201 });

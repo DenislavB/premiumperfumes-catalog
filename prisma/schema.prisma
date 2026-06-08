@@ -35,8 +35,10 @@ model Product {
 model PurchaseRequest {
   id        String   @id @default(cuid())
   name      String
-  email     String
+  email     String?
   phone     String?
+  courier   String?  // "Speedy" | "Econt"
+  address   String?  @db.Text
   message   String?  @db.Text
   items     Json
   status    String   @default("new")

@@ -13,6 +13,9 @@ export function formatPrice(price: number) {
   }).format(price);
 }
 
+// The label used for the tester/decant (отливка) variant
+export const TESTER_SIZE = "Тестер";
+
 export function slugify(text: string) {
   return text
     .toLowerCase()

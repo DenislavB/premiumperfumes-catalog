@@ -18,7 +18,7 @@ type RequestItem = {
 export default function RequestModal({ item, onClose, initialVariant = 0 }: { item: RequestItem | null; onClose: () => void; initialVariant?: number }) {
   const t = useTranslations("request");
   const locale = useLocale();
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", courier: "", address: "", message: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const hasVariants = !!(item?.variants && item.variants.length > 0);
@@ -112,16 +112,28 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
                 <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none" />
               </div>
               <div>
-                <label className="text-xs text-[#F5ECD7]/50 tracking-wider uppercase block mb-1.5">{t("email")} *</label>
-                <input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none" />
+                <label className="text-xs text-[#F5ECD7]/50 tracking-wider uppercase block mb-1.5">{t("phone")} *</label>
+                <input required type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none" />
               </div>
               <div>
-                <label className="text-xs text-[#F5ECD7]/50 tracking-wider uppercase block mb-1.5">{t("phone")}</label>
-                <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none" />
+                <label className="text-xs text-[#F5ECD7]/50 tracking-wider uppercase block mb-1.5">{t("email")}</label>
+                <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none" />
+              </div>
+              <div>
+                <label className="text-xs text-[#F5ECD7]/50 tracking-wider uppercase block mb-1.5">{t("courier")} *</label>
+                <select required value={form.courier} onChange={e => setForm(f => ({ ...f, courier: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none">
+                  <option value="">{t("courierHint")}</option>
+                  <option value="Speedy">Speedy</option>
+                  <option value="Econt">Econt</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-[#F5ECD7]/50 tracking-wider uppercase block mb-1.5">{t("address")} *</label>
+                <input required value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none" placeholder={locale === "bg" ? "Град, офис / адрес" : "City, office / address"} />
               </div>
               <div className="col-span-2">
                 <label className="text-xs text-[#F5ECD7]/50 tracking-wider uppercase block mb-1.5">{t("message")}</label>
-                <textarea rows={3} value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none resize-none" />
+                <textarea rows={2} value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none resize-none" />
               </div>
             </div>
             {status === "error" && <p className="text-red-400 text-xs">{t("error")}</p>}

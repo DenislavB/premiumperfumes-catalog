@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
-import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X } from "lucide-react";
+import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin } from "lucide-react";
 import ProductFormModal from "./ProductFormModal";
 
 type Product = {
@@ -32,8 +32,10 @@ type Product = {
 type Request = {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   phone: string | null;
+  courier: string | null;
+  address: string | null;
   message: string | null;
   items: unknown;
   status: string;
@@ -330,11 +332,23 @@ export default function AdminDashboardClient({
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div>
                         <p className="text-[#F5ECD7] font-medium">{req.name}</p>
-                        <p className="text-[#F5ECD7]/50 text-sm mt-0.5">{req.email}</p>
                         {req.phone && (
-                          <p className="text-[#F5ECD7]/40 text-sm flex items-center gap-1 mt-0.5">
+                          <p className="text-[#C9A84C] text-sm flex items-center gap-1 mt-0.5">
                             <Phone size={12} />
                             {req.phone}
+                          </p>
+                        )}
+                        {req.email && (
+                          <p className="text-[#F5ECD7]/50 text-sm mt-0.5">{req.email}</p>
+                        )}
+                        {(req.courier || req.address) && (
+                          <p className="text-[#F5ECD7]/40 text-sm flex items-start gap-1 mt-1">
+                            <MapPin size={12} className="mt-0.5 flex-shrink-0" />
+                            <span>
+                              {req.courier && <span className="text-[#C9A84C]">{req.courier}</span>}
+                              {req.courier && req.address && " · "}
+                              {req.address}
+                            </span>
                           </p>
                         )}
                       </div>

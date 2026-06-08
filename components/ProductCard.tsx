@@ -2,7 +2,7 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, TESTER_SIZE } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
 export default function ProductCard({ product, onRequest }: { product: Product; onRequest: (p: Product) => void }) {
@@ -11,8 +11,12 @@ export default function ProductCard({ product, onRequest }: { product: Product; 
   const name = product.name; // Always English
   const isOutOfStock = !product.available;
   const hasVariants = product.variants && product.variants.length > 0;
-  const minVariantPrice = hasVariants
-    ? Math.min(...product.variants.map(v => v.price))
+  // "From" price reflects the real perfume — exclude the cheap tester from the headline
+  const fullSizeVariants = hasVariants
+    ? product.variants.filter(v => v.size !== TESTER_SIZE)
+    : [];
+  const minVariantPrice = fullSizeVariants.length > 0
+    ? Math.min(...fullSizeVariants.map(v => v.price))
     : product.price;
 
   return (
