@@ -51,6 +51,21 @@ model PurchaseRequest {
   address   String?  @db.Text
   message   String?  @db.Text
   items     Json
+  promoCode String?  // code applied to this order
+  discount  Float?   // discount amount in EUR
   status    String   @default("new")
   createdAt DateTime @default(now())
+}
+
+model PromoCode {
+  id            String    @id @default(cuid())
+  code          String    @unique
+  discountType  String    @default("percent") // "percent" | "fixed"
+  discountValue Float                          // 10 = 10% or 10€
+  minOrder      Float?                         // minimum order total (EUR) to qualify
+  expiresAt     DateTime?                      // optional expiry
+  usageLimit    Int?                           // optional max total uses
+  usageCount    Int       @default(0)
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
 }

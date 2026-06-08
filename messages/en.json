@@ -47,7 +47,12 @@
     "submit": "Send Request",
     "success": "Thank you! We will contact you shortly.",
     "error": "Something went wrong. Please try again.",
-    "items": "Requested Items"
+    "items": "Requested Items",
+    "promo": "Promo code",
+    "promoApply": "Apply",
+    "promoPlaceholder": "Enter promo code",
+    "discount": "Discount",
+    "total": "Total"
   },
   "footer": {
     "rights": "All rights reserved.",

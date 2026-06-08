@@ -31,6 +31,12 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
   const [officeSearch, setOfficeSearch] = useState("");
   const [showOfficeList, setShowOfficeList] = useState(false);
 
+  // Promo code
+  const [promoInput, setPromoInput] = useState("");
+  const [promoStatus, setPromoStatus] = useState<"idle" | "loading" | "ok" | "bad">("idle");
+  const [promoMsg, setPromoMsg] = useState("");
+  const [applied, setApplied] = useState<{ code: string; discount: number; finalTotal: number } | null>(null);
+
   useEffect(() => {
     if (form.courier === "Econt" && econtOffices.length === 0) {
       fetch("/api/econt-offices")
@@ -53,6 +59,39 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
   const chosenSize = hasVariants ? item.variants![selectedVariant].size : item.volume;
   const chosenPrice = hasVariants ? item.variants![selectedVariant].price : item.price;
 
+  const applyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setPromoStatus("loading");
+    setPromoMsg("");
+    try {
+      const res = await fetch("/api/promocodes/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoInput, total: chosenPrice }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setApplied({ code: data.code, discount: data.discount, finalTotal: data.finalTotal });
+        setPromoStatus("ok");
+      } else {
+        setApplied(null);
+        setPromoStatus("bad");
+        setPromoMsg(data.error || "Невалиден промокод");
+      }
+    } catch {
+      setPromoStatus("bad");
+      setPromoMsg("Грешка");
+    }
+  };
+
+  // Re-validate when the chosen size changes (price differs)
+  const removePromo = () => {
+    setApplied(null);
+    setPromoInput("");
+    setPromoStatus("idle");
+    setPromoMsg("");
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
@@ -63,6 +102,7 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
         body: JSON.stringify({
           ...form,
           items: [{ productId: item.id, name: item.name, nameBg: item.nameBg, volume: chosenSize, price: chosenPrice }],
+          promoCode: applied?.code || null,
         }),
       });
       if (!res.ok) throw new Error();
@@ -99,7 +139,7 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
                   <button
                     key={i}
                     type="button"
-                    onClick={() => setSelectedVariant(i)}
+                    onClick={() => { setSelectedVariant(i); removePromo(); }}
                     className={`text-xs px-3 py-1.5 border transition-colors ${
                       selectedVariant === i
                         ? "bg-[#C9A84C] text-[#0D0B08] border-[#C9A84C]"
@@ -115,7 +155,51 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
 
           <div className="flex justify-between items-center">
             <span className="text-[#F5ECD7] text-sm">{itemName} — {chosenSize}</span>
-            <span className="text-[#C9A84C] font-semibold">{formatPrice(chosenPrice)}</span>
+            <span className={`font-semibold ${applied ? "text-[#F5ECD7]/40 line-through text-sm" : "text-[#C9A84C]"}`}>
+              {formatPrice(chosenPrice)}
+            </span>
+          </div>
+
+          {/* Promo code */}
+          <div className="mt-3 pt-3 border-t border-[#2A2418]/60">
+            {applied ? (
+              <div className="flex flex-col gap-1">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-emerald-400 flex items-center gap-1.5">
+                    ✓ {applied.code}
+                    <button type="button" onClick={removePromo} className="text-[#F5ECD7]/30 hover:text-red-400 text-xs underline">
+                      {locale === "bg" ? "премахни" : "remove"}
+                    </button>
+                  </span>
+                  <span className="text-emerald-400">− {formatPrice(applied.discount)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-[#C9A84C] tracking-widest uppercase">{t("total")}</span>
+                  <span className="text-[#C9A84C] font-bold text-lg">{formatPrice(applied.finalTotal)}</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-2">
+                  <input
+                    value={promoInput}
+                    onChange={e => setPromoInput(e.target.value.toUpperCase())}
+                    placeholder={t("promoPlaceholder")}
+                    className="flex-1 px-3 py-2 text-sm rounded-none"
+                    onKeyDown={e => e.key === "Enter" && (e.preventDefault(), applyPromo())}
+                  />
+                  <button
+                    type="button"
+                    onClick={applyPromo}
+                    disabled={promoStatus === "loading" || !promoInput.trim()}
+                    className="px-4 py-2 text-xs font-semibold tracking-widest uppercase border border-[#C9A84C]/50 text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors disabled:opacity-40"
+                  >
+                    {promoStatus === "loading" ? "..." : t("promoApply")}
+                  </button>
+                </div>
+                {promoStatus === "bad" && <p className="text-red-400 text-xs mt-1.5">{promoMsg}</p>}
+              </>
+            )}
           </div>
         </div>
 

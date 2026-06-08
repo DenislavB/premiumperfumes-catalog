@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
-import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail } from "lucide-react";
+import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket } from "lucide-react";
 import ProductFormModal from "./ProductFormModal";
 
 type Product = {
@@ -38,6 +38,8 @@ type Request = {
   address: string | null;
   message: string | null;
   items: unknown;
+  promoCode: string | null;
+  discount: number | null;
   status: string;
   createdAt: string;
 };
@@ -52,22 +54,40 @@ type Message = {
   createdAt: string;
 };
 
-type Tab = "products" | "requests" | "messages";
+type PromoCode = {
+  id: string;
+  code: string;
+  discountType: string;
+  discountValue: number;
+  minOrder: number | null;
+  expiresAt: string | null;
+  usageLimit: number | null;
+  usageCount: number;
+  active: boolean;
+  createdAt: string;
+};
+
+type Tab = "products" | "requests" | "messages" | "promos";
 
 export default function AdminDashboardClient({
   products: initialProducts,
   requests: initialRequests,
   messages: initialMessages,
+  promoCodes: initialPromos,
 }: {
   products: Product[];
   requests: Request[];
   messages: Message[];
+  promoCodes: PromoCode[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("products");
   const [products, setProducts] = useState(initialProducts);
   const [requests, setRequests] = useState(initialRequests);
   const [messages, setMessages] = useState(initialMessages);
+  const [promos, setPromos] = useState(initialPromos);
+  const [newPromo, setNewPromo] = useState({ code: "", discountType: "percent", discountValue: "", minOrder: "", expiresAt: "", usageLimit: "" });
+  const [promoError, setPromoError] = useState("");
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -129,6 +149,42 @@ export default function AdminDashboardClient({
     setMessages(ms => ms.filter(m => m.id !== id));
   };
 
+  const createPromo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPromoError("");
+    const res = await fetch("/api/promocodes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newPromo),
+    });
+    if (res.ok) {
+      const created = await res.json();
+      setPromos(ps => [created, ...ps]);
+      setNewPromo({ code: "", discountType: "percent", discountValue: "", minOrder: "", expiresAt: "", usageLimit: "" });
+    } else {
+      const err = await res.json();
+      setPromoError(err.error || "Грешка");
+    }
+  };
+
+  const togglePromo = async (promo: PromoCode) => {
+    const res = await fetch(`/api/promocodes/${promo.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active: !promo.active }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setPromos(ps => ps.map(p => p.id === updated.id ? updated : p));
+    }
+  };
+
+  const deletePromo = async (id: string) => {
+    if (!confirm("Изтриване на промокода?")) return;
+    await fetch(`/api/promocodes/${id}`, { method: "DELETE" });
+    setPromos(ps => ps.filter(p => p.id !== id));
+  };
+
   const newRequests = requests.filter(r => r.status === "new").length;
   const unreadMessages = messages.filter(m => !m.read).length;
 
@@ -136,6 +192,7 @@ export default function AdminDashboardClient({
     { key: "products" as Tab, label: "Продукти", icon: Package },
     { key: "requests" as Tab, label: "Заявки", icon: ShoppingBag, badge: newRequests },
     { key: "messages" as Tab, label: "Съобщения", icon: Mail, badge: unreadMessages },
+    { key: "promos" as Tab, label: "Промокодове", icon: Ticket },
   ];
 
   return (
@@ -212,7 +269,7 @@ export default function AdminDashboardClient({
             <Menu size={22} />
           </button>
           <p className="text-[#C9A84C] text-sm tracking-widest uppercase" style={{ fontFamily: "var(--font-playfair)" }}>
-            {tab === "products" ? "Продукти" : tab === "requests" ? "Заявки" : "Съобщения"}
+            {tab === "products" ? "Продукти" : tab === "requests" ? "Заявки" : tab === "messages" ? "Съобщения" : "Промокодове"}
           </p>
           <button
             onClick={() => setShowNewForm(true)}
@@ -406,6 +463,20 @@ export default function AdminDashboardClient({
                           <span className="text-[#C9A84C]">{formatPrice(item.price)}</span>
                         </div>
                       ))}
+                      {req.promoCode && req.discount != null && (
+                        <>
+                          <div className="flex justify-between text-sm py-1 text-emerald-400">
+                            <span>Промокод: {req.promoCode}</span>
+                            <span>− {formatPrice(req.discount)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm py-1 mt-1 pt-2 border-t border-[#2A2418] font-semibold">
+                            <span className="text-[#F5ECD7]">Крайна цена</span>
+                            <span className="text-[#C9A84C]">
+                              {formatPrice(items.reduce((s, it) => s + (it.price || 0), 0) - req.discount)}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {req.message && (
@@ -474,6 +545,105 @@ export default function AdminDashboardClient({
               ))}
               {messages.length === 0 && (
                 <div className="text-center py-16 text-[#F5ECD7]/20">Няма съобщения все още.</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === "promos" && (
+          <div className="p-4 md:p-8">
+            <div className="hidden md:block mb-8">
+              <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Промокодове</h1>
+              <p className="text-[#F5ECD7]/30 text-sm mt-1">{promos.length} кода</p>
+            </div>
+
+            {/* Create form */}
+            <form onSubmit={createPromo} className="bg-[#161410] border border-[#C9A84C]/20 p-5 mb-6">
+              <p className="text-xs text-[#C9A84C] tracking-widest uppercase mb-4">Нов промокод</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Код *</label>
+                  <input required value={newPromo.code} onChange={e => setNewPromo(p => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="ЛЯТО10" className="w-full px-3 py-2 text-sm rounded-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Тип отстъпка</label>
+                  <select value={newPromo.discountType} onChange={e => setNewPromo(p => ({ ...p, discountType: e.target.value }))} className="w-full px-3 py-2 text-sm rounded-none">
+                    <option value="percent">Процент (%)</option>
+                    <option value="fixed">Фиксирана (€)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Стойност *</label>
+                  <input required type="number" step="0.01" min="0" value={newPromo.discountValue} onChange={e => setNewPromo(p => ({ ...p, discountValue: e.target.value }))} placeholder={newPromo.discountType === "percent" ? "10" : "5"} className="w-full px-3 py-2 text-sm rounded-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Мин. поръчка (€)</label>
+                  <input type="number" step="0.01" min="0" value={newPromo.minOrder} onChange={e => setNewPromo(p => ({ ...p, minOrder: e.target.value }))} placeholder="по желание" className="w-full px-3 py-2 text-sm rounded-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Валиден до</label>
+                  <input type="date" value={newPromo.expiresAt} onChange={e => setNewPromo(p => ({ ...p, expiresAt: e.target.value }))} className="w-full px-3 py-2 text-sm rounded-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Лимит употреби</label>
+                  <input type="number" min="1" value={newPromo.usageLimit} onChange={e => setNewPromo(p => ({ ...p, usageLimit: e.target.value }))} placeholder="неогр." className="w-full px-3 py-2 text-sm rounded-none" />
+                </div>
+              </div>
+              {promoError && <p className="text-red-400 text-xs mt-3">{promoError}</p>}
+              <button type="submit" className="mt-4 flex items-center gap-2 bg-[#C9A84C] text-[#0D0B08] px-4 py-2.5 text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors">
+                <Plus size={14} /> Създай код
+              </button>
+            </form>
+
+            {/* Codes list */}
+            <div className="flex flex-col gap-3">
+              {promos.map(promo => {
+                const expired = promo.expiresAt && new Date(promo.expiresAt) < new Date();
+                const exhausted = promo.usageLimit !== null && promo.usageCount >= promo.usageLimit;
+                return (
+                  <div key={promo.id} className="bg-[#161410] border border-[#2A2418] p-4 flex items-center justify-between gap-4 flex-wrap">
+                    <div className="flex items-center gap-4">
+                      <span className="text-[#C9A84C] font-bold text-lg tracking-wider">{promo.code}</span>
+                      <span className="text-[#F5ECD7]/70 text-sm">
+                        {promo.discountType === "percent" ? `-${promo.discountValue}%` : `-${promo.discountValue.toFixed(2)} €`}
+                      </span>
+                      {promo.minOrder !== null && (
+                        <span className="text-[#F5ECD7]/30 text-xs">мин. {promo.minOrder.toFixed(2)} €</span>
+                      )}
+                      {promo.expiresAt && (
+                        <span className={`text-xs ${expired ? "text-red-400" : "text-[#F5ECD7]/30"}`}>
+                          до {new Date(promo.expiresAt).toLocaleDateString("bg-BG")}
+                        </span>
+                      )}
+                      <span className="text-[#F5ECD7]/30 text-xs">
+                        употреби: {promo.usageCount}{promo.usageLimit !== null ? ` / ${promo.usageLimit}` : ""}
+                      </span>
+                      {(expired || exhausted) && (
+                        <span className="text-red-400/70 text-xs border border-red-500/30 px-1.5 py-0.5">
+                          {expired ? "изтекъл" : "изчерпан"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => togglePromo(promo)}
+                        className={`text-xs px-2.5 py-1 border transition-colors ${
+                          promo.active
+                            ? "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                            : "border-red-500/30 text-red-400 hover:bg-red-500/10"
+                        }`}
+                      >
+                        {promo.active ? "Активен" : "Изключен"}
+                      </button>
+                      <button onClick={() => deletePromo(promo.id)} className="text-[#F5ECD7]/40 hover:text-red-400 transition-colors p-1">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              {promos.length === 0 && (
+                <div className="text-center py-16 text-[#F5ECD7]/20">Няма промокодове все още.</div>
               )}
             </div>
           </div>
