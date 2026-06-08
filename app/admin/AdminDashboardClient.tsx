@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
-import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket } from "lucide-react";
+import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket, Star } from "lucide-react";
 import ProductFormModal from "./ProductFormModal";
 
 type Product = {
@@ -108,6 +108,25 @@ export default function AdminDashboardClient({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ available: !product.available }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setProducts(ps => ps.map(p => p.id === updated.id ? updated : p));
+    }
+  };
+
+  const featuredCount = products.filter(p => p.featured).length;
+
+  const toggleFeatured = async (product: Product) => {
+    // Limit: max 3 highlighted perfumes
+    if (!product.featured && featuredCount >= 3) {
+      alert("Можете да изберете максимум 3 акцентирани парфюма. Премахнете един, за да добавите нов.");
+      return;
+    }
+    const res = await fetch(`/api/products/${product.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ featured: !product.featured }),
     });
     if (res.ok) {
       const updated = await res.json();
@@ -284,7 +303,10 @@ export default function AdminDashboardClient({
             <div className="hidden md:flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Продукти</h1>
-                <p className="text-[#F5ECD7]/30 text-sm mt-1">{products.length} продукта в каталога</p>
+                <p className="text-[#F5ECD7]/30 text-sm mt-1">
+                  {products.length} продукта в каталога
+                  <span className="ml-3 text-[#C9A84C]/70">★ акценти: {featuredCount}/3</span>
+                </p>
               </div>
               <button
                 onClick={() => setShowNewForm(true)}
@@ -319,6 +341,13 @@ export default function AdminDashboardClient({
                       {product.available ? "Активен" : "Скрит"}
                     </button>
                     <div className="flex gap-2">
+                      <button
+                        onClick={() => toggleFeatured(product)}
+                        title={product.featured ? "Премахни от акценти" : "Добави в акценти"}
+                        className={product.featured ? "text-[#C9A84C]" : "text-[#F5ECD7]/40 hover:text-[#C9A84C]"}
+                      >
+                        <Star size={14} fill={product.featured ? "#C9A84C" : "none"} />
+                      </button>
                       <button onClick={() => setEditProduct(product)} className="text-[#F5ECD7]/40 hover:text-[#C9A84C]">
                         <Pencil size={14} />
                       </button>
@@ -385,6 +414,13 @@ export default function AdminDashboardClient({
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleFeatured(product)}
+                            title={product.featured ? "Премахни от акценти" : "Добави в акценти"}
+                            className={`transition-colors p-1 ${product.featured ? "text-[#C9A84C]" : "text-[#F5ECD7]/40 hover:text-[#C9A84C]"}`}
+                          >
+                            <Star size={14} fill={product.featured ? "#C9A84C" : "none"} />
+                          </button>
                           <button onClick={() => setEditProduct(product)} className="text-[#F5ECD7]/40 hover:text-[#C9A84C] transition-colors p-1">
                             <Pencil size={14} />
                           </button>
