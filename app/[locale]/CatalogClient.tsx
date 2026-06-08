@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import ProductCard from "@/components/ProductCard";
 import RequestModal from "@/components/RequestModal";
+import ContactForm from "@/components/ContactForm";
 import type { Product } from "@/lib/types";
 
 const FILTERS = ["all", "Men", "Women", "Unisex", "featured", "promotions"] as const;
@@ -135,25 +136,22 @@ export default function CatalogClient({ products, locale }: { products: Product[
 
       {/* Contact */}
       <section id="contact" className="py-24 px-6 border-t border-[#2A2418]">
-        <div className="max-w-xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-4 mb-6">
-            <div className="h-px w-12 bg-[#C9A84C]/40" />
-            <span className="text-[#C9A84C] text-xs tracking-[0.5em] uppercase">◈</span>
-            <div className="h-px w-12 bg-[#C9A84C]/40" />
+        <div className="max-w-xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <div className="h-px w-12 bg-[#C9A84C]/40" />
+              <span className="text-[#C9A84C] text-xs tracking-[0.5em] uppercase">◈</span>
+              <div className="h-px w-12 bg-[#C9A84C]/40" />
+            </div>
+            <h2
+              className="text-4xl text-[#F5ECD7] mb-3"
+              style={{ fontFamily: "var(--font-playfair)" }}
+            >
+              {t("nav.contact")}
+            </h2>
+            <p className="text-[#F5ECD7]/50">{t("contactForm.subtitle")}</p>
           </div>
-          <h2
-            className="text-4xl text-[#F5ECD7] mb-4"
-            style={{ fontFamily: "var(--font-playfair)" }}
-          >
-            {t("nav.contact")}
-          </h2>
-          <p className="text-[#F5ECD7]/50 mb-8">premiumperfumes.bg</p>
-          <a
-            href="mailto:info@premiumperfumes.bg"
-            className="inline-block border border-[#C9A84C]/50 text-[#C9A84C] px-8 py-3 text-sm tracking-widest hover:bg-[#C9A84C]/10 transition-colors"
-          >
-            info@premiumperfumes.bg
-          </a>
+          <ContactForm />
         </div>
       </section>
 

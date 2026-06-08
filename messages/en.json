@@ -57,5 +57,16 @@
   "about": {
     "title": "About Premium Perfumes",
     "text": "We bring the finest fragrances from the heart of Dubai to your door. Each bottle tells a story of craftsmanship, heritage, and luxury."
+  },
+  "contactForm": {
+    "subtitle": "Have a question? Write to us and we'll get back to you.",
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "contactHint": "Leave an email or phone so we can reach you.",
+    "message": "Your message",
+    "submit": "Send Message",
+    "success": "Thank you! Your message has been sent.",
+    "error": "Something went wrong. Please try again."
   }
 }

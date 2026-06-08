@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
-import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin } from "lucide-react";
+import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail } from "lucide-react";
 import ProductFormModal from "./ProductFormModal";
 
 type Product = {
@@ -42,19 +42,32 @@ type Request = {
   createdAt: string;
 };
 
-type Tab = "products" | "requests";
+type Message = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  message: string;
+  read: boolean;
+  createdAt: string;
+};
+
+type Tab = "products" | "requests" | "messages";
 
 export default function AdminDashboardClient({
   products: initialProducts,
   requests: initialRequests,
+  messages: initialMessages,
 }: {
   products: Product[];
   requests: Request[];
+  messages: Message[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("products");
   const [products, setProducts] = useState(initialProducts);
   const [requests, setRequests] = useState(initialRequests);
+  const [messages, setMessages] = useState(initialMessages);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -101,11 +114,28 @@ export default function AdminDashboardClient({
     setShowNewForm(false);
   };
 
+  const markMessageRead = async (id: string, read: boolean) => {
+    await fetch(`/api/contact/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ read }),
+    });
+    setMessages(ms => ms.map(m => m.id === id ? { ...m, read } : m));
+  };
+
+  const deleteMessage = async (id: string) => {
+    if (!confirm("Изтриване на съобщението?")) return;
+    await fetch(`/api/contact/${id}`, { method: "DELETE" });
+    setMessages(ms => ms.filter(m => m.id !== id));
+  };
+
   const newRequests = requests.filter(r => r.status === "new").length;
+  const unreadMessages = messages.filter(m => !m.read).length;
 
   const navItems = [
     { key: "products" as Tab, label: "Продукти", icon: Package },
     { key: "requests" as Tab, label: "Заявки", icon: ShoppingBag, badge: newRequests },
+    { key: "messages" as Tab, label: "Съобщения", icon: Mail, badge: unreadMessages },
   ];
 
   return (
@@ -182,7 +212,7 @@ export default function AdminDashboardClient({
             <Menu size={22} />
           </button>
           <p className="text-[#C9A84C] text-sm tracking-widest uppercase" style={{ fontFamily: "var(--font-playfair)" }}>
-            {tab === "products" ? "Продукти" : "Заявки"}
+            {tab === "products" ? "Продукти" : tab === "requests" ? "Заявки" : "Съобщения"}
           </p>
           <button
             onClick={() => setShowNewForm(true)}
@@ -389,6 +419,61 @@ export default function AdminDashboardClient({
               })}
               {requests.length === 0 && (
                 <div className="text-center py-16 text-[#F5ECD7]/20">Няма заявки все още.</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === "messages" && (
+          <div className="p-4 md:p-8">
+            <div className="hidden md:block mb-8">
+              <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Съобщения от контактната форма</h1>
+              <p className="text-[#F5ECD7]/30 text-sm mt-1">{messages.length} съобщения</p>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {messages.map(msg => (
+                <div
+                  key={msg.id}
+                  className={`border p-4 md:p-6 transition-colors ${
+                    msg.read ? "bg-[#161410] border-[#2A2418]" : "bg-[#1A1510] border-[#C9A84C]/40"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                      <p className="text-[#F5ECD7] font-medium flex items-center gap-2">
+                        {msg.name}
+                        {!msg.read && <span className="text-[#0D0B08] bg-[#C9A84C] text-[10px] font-bold px-1.5 py-0.5 tracking-wider">НОВО</span>}
+                      </p>
+                      {msg.email && <p className="text-[#C9A84C] text-sm mt-0.5">{msg.email}</p>}
+                      {msg.phone && (
+                        <p className="text-[#F5ECD7]/50 text-sm flex items-center gap-1 mt-0.5">
+                          <Phone size={12} /> {msg.phone}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[#F5ECD7]/30 text-xs">
+                        {new Date(msg.createdAt).toLocaleDateString("bg-BG")}
+                      </span>
+                      <button
+                        onClick={() => markMessageRead(msg.id, !msg.read)}
+                        className="text-xs px-2.5 py-1 border border-[#2A2418] text-[#F5ECD7]/50 hover:border-[#C9A84C]/50 hover:text-[#C9A84C] transition-colors"
+                      >
+                        {msg.read ? "Маркирай като ново" : "Маркирай прочетено"}
+                      </button>
+                      <button onClick={() => deleteMessage(msg.id)} className="text-[#F5ECD7]/40 hover:text-red-400 transition-colors p-1">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-[#2A2418]">
+                    <p className="text-[#F5ECD7]/70 text-sm whitespace-pre-wrap">{msg.message}</p>
+                  </div>
+                </div>
+              ))}
+              {messages.length === 0 && (
+                <div className="text-center py-16 text-[#F5ECD7]/20">Няма съобщения все още.</div>
               )}
             </div>
           </div>
