@@ -131,6 +131,14 @@ export default function CatalogClient({ products, locale }: { products: Product[
             {t("about.title")}
           </h2>
           <p className="text-[#F5ECD7]/60 text-lg leading-relaxed">{t("about.text")}</p>
+          <a
+            href="https://www.google.com/maps/search/?api=1&query=Omaya+бул.+Цар+Освободител+91+Кюстендил"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 mt-8 border border-[#C9A84C]/50 text-[#C9A84C] px-6 py-3 text-sm tracking-widest hover:bg-[#C9A84C]/10 transition-colors"
+          >
+            📍 Omaya · гр. Кюстендил, бул. „Цар Освободител" 91
+          </a>
         </div>
       </section>
 
