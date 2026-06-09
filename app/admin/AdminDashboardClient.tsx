@@ -6,6 +6,24 @@ import { formatPrice } from "@/lib/utils";
 import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket, Star } from "lucide-react";
 import ProductFormModal from "./ProductFormModal";
 
+// Format a number as a compact price (no currency, drop trailing .00)
+function num(n: number) {
+  return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+
+// Variant price summary, sorted low→high. Returns { prices, sizes }
+function priceSummary(product: { price: number; variants?: { size: string; price: number }[] }) {
+  const v = product.variants;
+  if (!v || v.length === 0) {
+    return { prices: `${num(product.price)} €`, sizes: "" };
+  }
+  const sorted = [...v].sort((a, b) => a.price - b.price);
+  return {
+    prices: sorted.map(x => num(x.price)).join(" / ") + " €",
+    sizes: sorted.map(x => x.size).join(" / "),
+  };
+}
+
 type Product = {
   id: string;
   slug: string;
@@ -330,7 +348,7 @@ export default function AdminDashboardClient({
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[#F5ECD7] text-sm truncate">{product.name}</p>
-                    <p className="text-[#C9A84C] text-xs">{formatPrice(product.price)}</p>
+                    <p className="text-[#C9A84C] text-xs">{priceSummary(product).prices}<span className="text-[#F5ECD7]/30"> · {priceSummary(product).sizes}</span></p>
                     <p className="text-[#F5ECD7]/30 text-xs">{product.brand}</p>
                   </div>
                   <div className="flex flex-col gap-2 items-end">
@@ -395,10 +413,15 @@ export default function AdminDashboardClient({
                       </td>
                       <td className="px-4 py-3 text-[#F5ECD7]/60 text-sm">{product.brand}</td>
                       <td className="px-4 py-3">
-                        <span className="text-[#C9A84C] text-sm font-medium">{formatPrice(product.price)}</span>
-                        {product.inPromotion && product.discountPct && (
-                          <span className="ml-2 text-xs bg-[#C9A84C]/20 text-[#C9A84C] px-1.5 py-0.5">-{product.discountPct}%</span>
-                        )}
+                        {(() => {
+                          const s = priceSummary(product);
+                          return (
+                            <div>
+                              <span className="text-[#C9A84C] text-sm font-medium">{s.prices}</span>
+                              {s.sizes && <span className="block text-[#F5ECD7]/30 text-xs">{s.sizes}</span>}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3">
                         <button
