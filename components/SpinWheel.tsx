@@ -6,13 +6,6 @@ import { PRIZES } from "@/lib/prizes";
 
 const SEG = 360 / PRIZES.length;
 
-function shortLabel(i: number) {
-  const p = PRIZES[i];
-  if (p.type === "percent") return `${p.value}%`;
-  if (p.type === "fixed") return `−${p.value}€`;
-  return "Отливка";
-}
-
 export default function SpinWheel() {
   const locale = useLocale();
   const bg = locale === "bg";
@@ -98,17 +91,16 @@ export default function SpinWheel() {
             const center = i * SEG + SEG / 2;
             const light = p.color === "#E8D5A3" || p.color === "#C9A84C";
             return (
-              <div key={i} className="absolute left-1/2 top-1/2 origin-left"
-                style={{ transform: `rotate(${center}deg)`, width: "50%", height: "1px" }}>
+              <div
+                key={i}
+                className="absolute top-0 left-1/2 h-1/2 origin-bottom pointer-events-none"
+                style={{ transform: `translateX(-50%) rotate(${center}deg)` }}
+              >
                 <span
-                  className="absolute text-xs md:text-sm font-bold whitespace-nowrap"
-                  style={{
-                    right: "14%",
-                    transform: "translateY(-50%) rotate(90deg)",
-                    color: light ? "#0D0B08" : "#E8D5A3",
-                  }}
+                  className="block text-[11px] md:text-sm font-bold whitespace-nowrap mt-5 md:mt-7"
+                  style={{ color: light ? "#0D0B08" : "#E8D5A3" }}
                 >
-                  {shortLabel(i)}
+                  {p.short}
                 </span>
               </div>
             );
