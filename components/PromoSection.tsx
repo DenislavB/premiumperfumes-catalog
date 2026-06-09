@@ -2,6 +2,7 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
+import Image from "next/image";
 import { formatPrice, TESTER_SIZE } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
@@ -75,7 +76,7 @@ export default function PromoSection({ products, onRequest }: { products: Produc
                   <Link href={`/${locale}/product/${p.slug}`}>
                     <div className="relative aspect-[3/4] bg-[#1A1612] overflow-hidden">
                       {p.images[0] ? (
-                        <img src={p.images[0]} alt={name} className="w-full h-full object-cover" />
+                        <Image src={p.images[0]} alt={name} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-7xl opacity-20">◈</div>
                       )}

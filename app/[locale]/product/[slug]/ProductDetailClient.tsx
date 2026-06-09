@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import RequestModal from "@/components/RequestModal";
@@ -67,7 +68,7 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
             <div>
               <div className="relative aspect-[3/4] bg-[#161410] border border-[#2A2418] overflow-hidden mb-4">
                 {product.images.length > 0 ? (
-                  <img src={product.images[imgIdx]} alt={name} className="w-full h-full object-cover" />
+                  <Image src={product.images[imgIdx]} alt={name} fill sizes="(max-width: 1024px) 100vw, 50vw" priority className="object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-[#F5ECD7]/10 text-8xl">◈</div>
                 )}
@@ -90,8 +91,8 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
               {product.images.length > 1 && (
                 <div className="flex gap-2">
                   {product.images.map((img, i) => (
-                    <button key={i} onClick={() => setImgIdx(i)} className={`w-16 h-20 border overflow-hidden transition-all ${i === imgIdx ? "border-[#C9A84C]" : "border-[#2A2418] opacity-50"}`}>
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    <button key={i} onClick={() => setImgIdx(i)} className={`relative w-16 h-20 border overflow-hidden transition-all ${i === imgIdx ? "border-[#C9A84C]" : "border-[#2A2418] opacity-50"}`}>
+                      <Image src={img} alt="" fill sizes="64px" className="object-cover" />
                     </button>
                   ))}
                 </div>

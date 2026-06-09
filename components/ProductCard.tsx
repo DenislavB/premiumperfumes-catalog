@@ -2,6 +2,7 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
+import Image from "next/image";
 import { formatPrice, TESTER_SIZE } from "@/lib/utils";
 import type { Product } from "@/lib/types";
 
@@ -37,10 +38,12 @@ export default function ProductCard({ product, onRequest }: { product: Product; 
       <Link href={`/${locale}/product/${product.slug}`}>
         <div className="relative aspect-[3/4] bg-[#1A1612] overflow-hidden">
           {product.images[0] ? (
-            <img
+            <Image
               src={product.images[0]}
               alt={name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-700"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
