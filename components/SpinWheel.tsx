@@ -6,7 +6,7 @@ import { PRIZES } from "@/lib/prizes";
 
 const SEG = 360 / PRIZES.length;
 
-export default function SpinWheel() {
+export default function SpinWheel({ onClose }: { onClose?: () => void }) {
   const locale = useLocale();
   const bg = locale === "bg";
   const [phase, setPhase] = useState<"ready" | "spinning" | "won" | "claimed">("ready");
@@ -167,6 +167,11 @@ export default function SpinWheel() {
             </>
           ) : (
             <p className="text-[#F5ECD7]/50 text-sm">{bg ? `Спечелихте: ${result.prize}. Споменете го при заявка и ще го приложим.` : `You won: ${result.prize}. Mention it with your order and we'll apply it.`}</p>
+          )}
+          {onClose && (
+            <button onClick={onClose} className="mt-8 px-8 py-3 bg-[#C9A84C] text-[#0D0B08] text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors">
+              {bg ? "Разгледай каталога" : "Browse the catalog"}
+            </button>
           )}
         </div>
       )}

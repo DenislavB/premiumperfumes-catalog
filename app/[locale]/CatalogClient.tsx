@@ -6,6 +6,7 @@ import ProductCard from "@/components/ProductCard";
 import RequestModal from "@/components/RequestModal";
 import ContactForm from "@/components/ContactForm";
 import PromoSection from "@/components/PromoSection";
+import SpinWheelOverlay from "@/components/SpinWheelOverlay";
 import type { Product } from "@/lib/types";
 
 const FILTERS = ["all", "Men", "Women", "Unisex", "featured", "promotions"] as const;
@@ -25,6 +26,8 @@ export default function CatalogClient({ products, locale }: { products: Product[
 
   return (
     <>
+      <SpinWheelOverlay />
+
       {/* Hero */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0D0B08] via-[#1A1410] to-[#0D0B08]" />
