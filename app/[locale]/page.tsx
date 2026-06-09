@@ -34,7 +34,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     "@context": "https://schema.org",
     "@type": "Store",
     name: "Premium Perfumes",
-    image: `${BASE}/og.jpg`,
+    image: `${BASE}/opengraph-image`,
     "@id": BASE,
     url: BASE,
     telephone: "",

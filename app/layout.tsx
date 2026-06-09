@@ -29,6 +29,9 @@ export const metadata: Metadata = {
     description: "Оригинални арабски и нишови парфюми от Дубай.",
   },
   robots: { index: true, follow: true },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
