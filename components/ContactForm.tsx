@@ -1,12 +1,14 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useState } from "react";
 
 export default function ContactForm() {
   const t = useTranslations("contactForm");
+  const locale = useLocale();
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [consent, setConsent] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +67,21 @@ export default function ContactForm() {
           <textarea required rows={4} value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none resize-none" />
         </div>
       </div>
+      <label className="flex items-start gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          required
+          checked={consent}
+          onChange={e => setConsent(e.target.checked)}
+          className="w-4 h-4 mt-0.5 accent-[#C9A84C] flex-shrink-0"
+        />
+        <span className="text-xs text-[#F5ECD7]/50 leading-relaxed">
+          {locale === "bg" ? "Съгласен съм с " : "I agree to the "}
+          <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="text-[#C9A84C] underline">
+            {locale === "bg" ? "Политиката за поверителност" : "Privacy Policy"}
+          </a>.
+        </span>
+      </label>
       {status === "error" && <p className="text-red-400 text-xs">{t("error")}</p>}
       <button
         type="submit"

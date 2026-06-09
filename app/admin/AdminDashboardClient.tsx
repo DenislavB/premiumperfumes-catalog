@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
-import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket, Star } from "lucide-react";
+import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket, Star, Gift } from "lucide-react";
 import ProductFormModal from "./ProductFormModal";
 
 // Format a number as a compact price (no currency, drop trailing .00)
@@ -85,18 +85,31 @@ type PromoCode = {
   createdAt: string;
 };
 
-type Tab = "products" | "requests" | "messages" | "promos";
+type SpinEntry = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  prize: string;
+  code: string | null;
+  marketing: boolean;
+  createdAt: string;
+};
+
+type Tab = "products" | "requests" | "messages" | "promos" | "spins";
 
 export default function AdminDashboardClient({
   products: initialProducts,
   requests: initialRequests,
   messages: initialMessages,
   promoCodes: initialPromos,
+  spinEntries: initialSpins,
 }: {
   products: Product[];
   requests: Request[];
   messages: Message[];
   promoCodes: PromoCode[];
+  spinEntries: SpinEntry[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("products");
@@ -104,6 +117,7 @@ export default function AdminDashboardClient({
   const [requests, setRequests] = useState(initialRequests);
   const [messages, setMessages] = useState(initialMessages);
   const [promos, setPromos] = useState(initialPromos);
+  const [spins] = useState(initialSpins);
   const [newPromo, setNewPromo] = useState({ code: "", discountType: "percent", discountValue: "", minOrder: "", expiresAt: "", usageLimit: "" });
   const [promoError, setPromoError] = useState("");
   const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -230,6 +244,7 @@ export default function AdminDashboardClient({
     { key: "requests" as Tab, label: "Заявки", icon: ShoppingBag, badge: newRequests },
     { key: "messages" as Tab, label: "Съобщения", icon: Mail, badge: unreadMessages },
     { key: "promos" as Tab, label: "Промокодове", icon: Ticket },
+    { key: "spins" as Tab, label: "Игра", icon: Gift },
   ];
 
   return (
@@ -306,7 +321,7 @@ export default function AdminDashboardClient({
             <Menu size={22} />
           </button>
           <p className="text-[#C9A84C] text-sm tracking-widest uppercase" style={{ fontFamily: "var(--font-playfair)" }}>
-            {tab === "products" ? "Продукти" : tab === "requests" ? "Заявки" : tab === "messages" ? "Съобщения" : "Промокодове"}
+            {tab === "products" ? "Продукти" : tab === "requests" ? "Заявки" : tab === "messages" ? "Съобщения" : tab === "promos" ? "Промокодове" : "Игра"}
           </p>
           <button
             onClick={() => setShowNewForm(true)}
@@ -704,6 +719,49 @@ export default function AdminDashboardClient({
               {promos.length === 0 && (
                 <div className="text-center py-16 text-[#F5ECD7]/20">Няма промокодове все още.</div>
               )}
+            </div>
+          </div>
+        )}
+
+        {tab === "spins" && (
+          <div className="p-4 md:p-8">
+            <div className="hidden md:block mb-8">
+              <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Участници в играта</h1>
+              <p className="text-[#F5ECD7]/30 text-sm mt-1">
+                {spins.length} участници · {spins.filter(s => s.marketing).length} съгласни за маркетинг
+              </p>
+            </div>
+
+            <div className="bg-[#161410] border border-[#2A2418] overflow-x-auto">
+              <table className="w-full min-w-[640px]">
+                <thead>
+                  <tr className="border-b border-[#2A2418]">
+                    {["Име", "Контакт", "Награда", "Код", "Маркетинг", "Дата"].map(h => (
+                      <th key={h} className="text-left text-xs text-[#F5ECD7]/30 tracking-widest uppercase px-4 py-3 font-normal">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {spins.map(s => (
+                    <tr key={s.id} className="border-b border-[#2A2418]/50 hover:bg-[#1A1612] transition-colors">
+                      <td className="px-4 py-3 text-[#F5ECD7] text-sm">{s.name || "—"}</td>
+                      <td className="px-4 py-3 text-[#F5ECD7]/60 text-sm">
+                        {s.email && <div>{s.email}</div>}
+                        {s.phone && <div className="text-[#C9A84C]">{s.phone}</div>}
+                      </td>
+                      <td className="px-4 py-3 text-[#F5ECD7]/70 text-sm">{s.prize}</td>
+                      <td className="px-4 py-3 text-[#C9A84C] text-sm font-medium">{s.code || "—"}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {s.marketing ? <span className="text-emerald-400">✓ Да</span> : <span className="text-[#F5ECD7]/30">Не</span>}
+                      </td>
+                      <td className="px-4 py-3 text-[#F5ECD7]/30 text-xs">{new Date(s.createdAt).toLocaleDateString("bg-BG")}</td>
+                    </tr>
+                  ))}
+                  {spins.length === 0 && (
+                    <tr><td colSpan={6} className="text-center py-16 text-[#F5ECD7]/20">Няма участници все още.</td></tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

@@ -57,6 +57,17 @@ model PurchaseRequest {
   createdAt DateTime @default(now())
 }
 
+model SpinEntry {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?
+  phone     String?
+  prize     String
+  code      String?  // generated promo code, if the prize is a discount
+  marketing Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
 model PromoCode {
   id            String    @id @default(cuid())
   code          String    @unique

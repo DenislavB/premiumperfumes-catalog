@@ -22,6 +22,7 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
   const locale = useLocale();
   const [form, setForm] = useState({ name: "", email: "", phone: "", courier: "", address: "", message: "" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [consent, setConsent] = useState(false);
 
   const hasVariants = !!(item?.variants && item.variants.length > 0);
   const [selectedVariant, setSelectedVariant] = useState(initialVariant);
@@ -307,6 +308,25 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
                 <textarea rows={2} value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none resize-none" />
               </div>
             </div>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                required
+                checked={consent}
+                onChange={e => setConsent(e.target.checked)}
+                className="w-4 h-4 mt-0.5 accent-[#C9A84C] flex-shrink-0"
+              />
+              <span className="text-xs text-[#F5ECD7]/50 leading-relaxed">
+                {locale === "bg" ? "Запознах се и съм съгласен с " : "I have read and agree to the "}
+                <a href={`/${locale}/privacy`} target="_blank" rel="noopener noreferrer" className="text-[#C9A84C] underline">
+                  {locale === "bg" ? "Политиката за поверителност" : "Privacy Policy"}
+                </a>
+                {locale === "bg" ? " и " : " and "}
+                <a href={`/${locale}/terms`} target="_blank" rel="noopener noreferrer" className="text-[#C9A84C] underline">
+                  {locale === "bg" ? "Общите условия" : "Terms"}
+                </a>.
+              </span>
+            </label>
             {status === "error" && <p className="text-red-400 text-xs">{t("error")}</p>}
             <button type="submit" disabled={status === "loading"} className="w-full py-3 bg-[#C9A84C] text-[#0D0B08] text-xs font-semibold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors disabled:opacity-50">
               {status === "loading" ? "..." : t("submit")}
