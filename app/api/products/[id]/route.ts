@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { rehostImages } from "@/lib/blob";
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,7 +28,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.price !== undefined) data.price = parseFloat(body.price);
   if (body.originalPrice !== undefined) data.originalPrice = body.originalPrice ? parseFloat(body.originalPrice) : null;
   if (body.quantity !== undefined) data.quantity = parseInt(body.quantity);
-  if (body.images !== undefined) data.images = body.images;
+  if (body.images !== undefined) data.images = await rehostImages(body.images);
   if (body.variants !== undefined) data.variants = Array.isArray(body.variants) ? body.variants : [];
   if (body.notes !== undefined) data.notes = body.notes;
   if (body.notesBg !== undefined) data.notesBg = body.notesBg;

@@ -52,3 +52,5 @@ feature-3.mjs
 import-batch2.mjs
 rename-tester.mjs
 check-tester.mjs
+migrate-blob.mjs
+debug-blob.mjs

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { slugify } from "@/lib/utils";
+import { rehostImages } from "@/lib/blob";
 
 export async function GET() {
   const products = await prisma.product.findMany({ orderBy: { createdAt: "desc" } });
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const slug = slugify(body.name) + "-" + Date.now().toString(36);
+  const images = await rehostImages(body.images || []);
 
   const product = await prisma.product.create({
     data: {
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
       price: parseFloat(body.price),
       originalPrice: body.originalPrice ? parseFloat(body.originalPrice) : null,
       quantity: parseInt(body.quantity) || 0,
-      images: body.images || [],
+      images,
       variants: Array.isArray(body.variants) ? body.variants : [],
       notes: body.notes || "",
       notesBg: body.notesBg || "",
