@@ -1,5 +1,15 @@
 import SpinWheel from "@/components/SpinWheel";
 
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  return {
+    title: locale === "bg" ? "Завъртете и спечелете" : "Spin & Win",
+    description: locale === "bg"
+      ? "Завъртете колелото и спечелете отстъпка или подарък за откриването на premiumperfumes.bg!"
+      : "Spin the wheel and win a discount or gift for the launch of premiumperfumes.bg!",
+  };
+}
+
 export default async function SpinPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   const bg = locale === "bg";

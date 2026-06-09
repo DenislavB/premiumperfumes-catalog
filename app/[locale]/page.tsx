@@ -1,10 +1,22 @@
-import { getTranslations } from "next-intl/server";
+import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import CatalogClient from "./CatalogClient";
+import { COMPANY } from "@/lib/legalContent";
+
+const BASE = "https://premiumperfumes.bg";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  return {
+    alternates: {
+      canonical: `${BASE}/${locale}`,
+      languages: { bg: `${BASE}/bg`, en: `${BASE}/en` },
+    },
+  };
+}
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "catalog" });
 
   const rawProducts = await prisma.product.findMany({
     where: { available: true },
@@ -17,5 +29,31 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     variants: Array.isArray(p.variants) ? p.variants : [],
   }));
 
-  return <CatalogClient products={products} locale={locale} />;
+  // Organization / LocalBusiness structured data
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: "Premium Perfumes",
+    image: `${BASE}/og.jpg`,
+    "@id": BASE,
+    url: BASE,
+    telephone: "",
+    priceRange: "€€",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "бул. „Цар Освободител“ 91",
+      addressLocality: "Кюстендил",
+      addressCountry: "BG",
+    },
+    legalName: COMPANY.name,
+    taxID: COMPANY.eik,
+    sameAs: [BASE],
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <CatalogClient products={products} locale={locale} />
+    </>
+  );
 }

@@ -2,13 +2,38 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Premium Perfumes | Luxury Dubai Fragrances",
-  description: "Discover the finest luxury perfumes from Dubai — rare oud, precious musks, and timeless Arabian fragrances.",
+  metadataBase: new URL("https://premiumperfumes.bg"),
+  title: {
+    default: "Premium Perfumes — Луксозни арабски парфюми от Дубай",
+    template: "%s | Premium Perfumes",
+  },
+  description:
+    "Оригинални арабски и нишови парфюми от Дубай на достъпни цени. Lattafa, Armaf, Afnan и още. Магазин Omaya, гр. Кюстендил. Доставка със Speedy и Еконт.",
+  keywords: [
+    "арабски парфюми", "дубайски парфюми", "Lattafa", "Armaf", "Afnan",
+    "нишови парфюми", "парфюми Кюстендил", "оригинални парфюми", "Omaya",
+    "arabic perfumes", "dubai perfumes", "niche fragrances",
+  ],
+  applicationName: "Premium Perfumes",
+  openGraph: {
+    type: "website",
+    siteName: "Premium Perfumes",
+    title: "Premium Perfumes — Луксозни арабски парфюми от Дубай",
+    description: "Оригинални арабски и нишови парфюми от Дубай. Магазин Omaya, гр. Кюстендил.",
+    url: "https://premiumperfumes.bg",
+    locale: "bg_BG",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Premium Perfumes — Луксозни арабски парфюми от Дубай",
+    description: "Оригинални арабски и нишови парфюми от Дубай.",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html className="h-full">
+    <html lang="bg" className="h-full">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
