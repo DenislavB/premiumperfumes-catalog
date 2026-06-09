@@ -77,6 +77,7 @@ type PromoCode = {
   code: string;
   discountType: string;
   discountValue: number;
+  note: string | null;
   minOrder: number | null;
   expiresAt: string | null;
   usageLimit: number | null;
@@ -679,7 +680,11 @@ export default function AdminDashboardClient({
                     <div className="flex items-center gap-4">
                       <span className="text-[#C9A84C] font-bold text-lg tracking-wider">{promo.code}</span>
                       <span className="text-[#F5ECD7]/70 text-sm">
-                        {promo.discountType === "percent" ? `-${promo.discountValue}%` : `-${promo.discountValue.toFixed(2)} €`}
+                        {promo.discountType === "freebie"
+                          ? (promo.note || "Подарък")
+                          : promo.discountType === "percent"
+                          ? `-${promo.discountValue}%`
+                          : `-${promo.discountValue.toFixed(2)} €`}
                       </span>
                       {promo.minOrder !== null && (
                         <span className="text-[#F5ECD7]/30 text-xs">мин. {promo.minOrder.toFixed(2)} €</span>

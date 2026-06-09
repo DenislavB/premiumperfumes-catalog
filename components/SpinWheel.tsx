@@ -50,8 +50,8 @@ export default function SpinWheel({ onClose }: { onClose?: () => void }) {
 
   const claim = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email && !form.phone) {
-      setError(bg ? "Оставете имейл или телефон." : "Leave an email or phone.");
+    if (!form.name.trim() || !form.email.trim()) {
+      setError(bg ? "Моля, въведете име и имейл." : "Please enter your name and email.");
       return;
     }
     setError("");
@@ -131,9 +131,9 @@ export default function SpinWheel({ onClose }: { onClose?: () => void }) {
           </p>
           <p className="text-[#F5ECD7]/50 text-xs mb-4">{bg ? "Оставете данни за контакт, за да получите наградата си." : "Leave your contact details to claim your prize."}</p>
           <form onSubmit={claim} className="flex flex-col gap-3 text-left">
-            <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={bg ? "Име" : "Name"} className="w-full px-3 py-2.5 text-sm rounded-none" />
-            <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder={bg ? "Имейл" : "Email"} className="w-full px-3 py-2.5 text-sm rounded-none" />
-            <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder={bg ? "Телефон" : "Phone"} className="w-full px-3 py-2.5 text-sm rounded-none" />
+            <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder={bg ? "Име *" : "Name *"} className="w-full px-3 py-2.5 text-sm rounded-none" />
+            <input required type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder={bg ? "Имейл *" : "Email *"} className="w-full px-3 py-2.5 text-sm rounded-none" />
+            <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder={bg ? "Телефон (по желание)" : "Phone (optional)"} className="w-full px-3 py-2.5 text-sm rounded-none" />
             <label className="flex items-start gap-2 cursor-pointer">
               <input type="checkbox" required checked={consent} onChange={e => setConsent(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#C9A84C] flex-shrink-0" />
               <span className="text-xs text-[#F5ECD7]/50 leading-relaxed">

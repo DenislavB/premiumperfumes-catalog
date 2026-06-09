@@ -49,3 +49,6 @@ merge-variants.mjs
 check-names.mjs
 add-testers.mjs
 feature-3.mjs
+import-batch2.mjs
+rename-tester.mjs
+check-tester.mjs

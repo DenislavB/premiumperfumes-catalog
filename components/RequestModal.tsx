@@ -36,7 +36,7 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
   const [promoInput, setPromoInput] = useState("");
   const [promoStatus, setPromoStatus] = useState<"idle" | "loading" | "ok" | "bad">("idle");
   const [promoMsg, setPromoMsg] = useState("");
-  const [applied, setApplied] = useState<{ code: string; discount: number; finalTotal: number } | null>(null);
+  const [applied, setApplied] = useState<{ code: string; discount: number; finalTotal: number; note?: string } | null>(null);
 
   useEffect(() => {
     if (form.courier === "Econt" && econtOffices.length === 0) {
@@ -72,7 +72,7 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
       });
       const data = await res.json();
       if (data.valid) {
-        setApplied({ code: data.code, discount: data.discount, finalTotal: data.finalTotal });
+        setApplied({ code: data.code, discount: data.discount, finalTotal: data.finalTotal, note: data.note });
         setPromoStatus("ok");
       } else {
         setApplied(null);
@@ -172,7 +172,11 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
                       {locale === "bg" ? "премахни" : "remove"}
                     </button>
                   </span>
-                  <span className="text-emerald-400">− {formatPrice(applied.discount)}</span>
+                  {applied.note ? (
+                    <span className="text-emerald-400">{applied.note}</span>
+                  ) : (
+                    <span className="text-emerald-400">− {formatPrice(applied.discount)}</span>
+                  )}
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-[#C9A84C] tracking-widest uppercase">{t("total")}</span>

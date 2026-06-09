@@ -71,8 +71,9 @@ model SpinEntry {
 model PromoCode {
   id            String    @id @default(cuid())
   code          String    @unique
-  discountType  String    @default("percent") // "percent" | "fixed"
-  discountValue Float                          // 10 = 10% or 10€
+  discountType  String    @default("percent") // "percent" | "fixed" | "freebie"
+  discountValue Float                          // 10 = 10% or 10€; 0 for freebie
+  note          String?                        // label for freebie vouchers (e.g. "Безплатна доставка")
   minOrder      Float?                         // minimum order total (EUR) to qualify
   expiresAt     DateTime?                      // optional expiry
   usageLimit    Int?                           // optional max total uses

@@ -28,6 +28,18 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // Freebie voucher (e.g. free decant / free shipping) — no price change, honored manually
+  if (promo.discountType === "freebie") {
+    return NextResponse.json({
+      valid: true,
+      code: promo.code,
+      discountType: "freebie",
+      note: promo.note || "Подарък",
+      discount: 0,
+      finalTotal: Math.round(orderTotal * 100) / 100,
+    });
+  }
+
   // Compute discount
   let discount = 0;
   if (promo.discountType === "percent") {

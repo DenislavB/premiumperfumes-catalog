@@ -26,29 +26,27 @@ export async function POST(req: NextRequest) {
     if (isNaN(idx) || idx < 0 || idx >= PRIZES.length) {
       return NextResponse.json({ error: "Invalid prize" }, { status: 400 });
     }
-    if (!email && !phone) {
-      return NextResponse.json({ error: "Email or phone required" }, { status: 400 });
+    if (!name || !email) {
+      return NextResponse.json({ error: "Name and email required" }, { status: 400 });
     }
 
     const prize = PRIZES[idx];
-    let code: string | null = null;
 
-    // Generate a single-use promo code for discount prizes
-    if (prize.type === "percent" || prize.type === "fixed") {
-      code = randomCode();
-      const expires = new Date();
-      expires.setDate(expires.getDate() + 30); // valid 30 days
-      await prisma.promoCode.create({
-        data: {
-          code,
-          discountType: prize.type,
-          discountValue: prize.value,
-          usageLimit: 1,
-          expiresAt: expires,
-          active: true,
-        },
-      });
-    }
+    // Generate a single-use promo code for EVERY prize
+    const code = randomCode();
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 30); // valid 30 days
+    await prisma.promoCode.create({
+      data: {
+        code,
+        discountType: prize.type, // "percent" | "fixed" | "freebie"
+        discountValue: prize.value,
+        note: prize.type === "freebie" ? prize.label : null,
+        usageLimit: 1,
+        expiresAt: expires,
+        active: true,
+      },
+    });
 
     await prisma.spinEntry.create({
       data: {
