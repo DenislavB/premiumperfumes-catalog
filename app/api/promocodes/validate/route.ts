@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       valid: true,
       code: promo.code,
       discountType: "freebie",
+      source: promo.source,
       note: promo.note || "Подарък",
       discount: 0,
       finalTotal: Math.round(orderTotal * 100) / 100,
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
     code: promo.code,
     discountType: promo.discountType,
     discountValue: promo.discountValue,
+    source: promo.source,
     discount,
     finalTotal: Math.round((orderTotal - discount) * 100) / 100,
   });

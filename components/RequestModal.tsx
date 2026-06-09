@@ -32,11 +32,12 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
   const [officeSearch, setOfficeSearch] = useState("");
   const [showOfficeList, setShowOfficeList] = useState(false);
 
-  // Promo code
+  // Promo codes — up to 2 per order: 1 wheel + 1 standard
+  type Applied = { code: string; source: string; discount: number; note?: string };
   const [promoInput, setPromoInput] = useState("");
   const [promoStatus, setPromoStatus] = useState<"idle" | "loading" | "ok" | "bad">("idle");
   const [promoMsg, setPromoMsg] = useState("");
-  const [applied, setApplied] = useState<{ code: string; discount: number; finalTotal: number; note?: string } | null>(null);
+  const [applied, setApplied] = useState<Applied[]>([]);
 
   useEffect(() => {
     if (form.courier === "Econt" && econtOffices.length === 0) {
@@ -60,8 +61,17 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
   const chosenSize = hasVariants ? item.variants![selectedVariant].size : item.volume;
   const chosenPrice = hasVariants ? item.variants![selectedVariant].price : item.price;
 
+  const totalDiscount = applied.reduce((s, a) => s + a.discount, 0);
+  const finalTotal = Math.max(0, Math.round((chosenPrice - totalDiscount) * 100) / 100);
+
   const applyPromo = async () => {
     if (!promoInput.trim()) return;
+    // Already applied?
+    if (applied.some(a => a.code === promoInput.trim().toUpperCase())) {
+      setPromoStatus("bad");
+      setPromoMsg(locale === "bg" ? "Този код вече е приложен." : "This code is already applied.");
+      return;
+    }
     setPromoStatus("loading");
     setPromoMsg("");
     try {
@@ -72,10 +82,21 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
       });
       const data = await res.json();
       if (data.valid) {
-        setApplied({ code: data.code, discount: data.discount, finalTotal: data.finalTotal, note: data.note });
-        setPromoStatus("ok");
+        // Only 1 code per source (1 wheel + 1 standard)
+        if (applied.some(a => a.source === data.source)) {
+          setPromoStatus("bad");
+          setPromoMsg(
+            data.source === "wheel"
+              ? (locale === "bg" ? "Вече имате приложен код от играта." : "You already have a wheel code applied.")
+              : (locale === "bg" ? "Вече имате приложен промокод." : "You already have a promo code applied.")
+          );
+          return;
+        }
+        setApplied(prev => [...prev, { code: data.code, source: data.source, discount: data.discount, note: data.note }]);
+        setPromoInput("");
+        setPromoStatus("idle");
+        setPromoMsg("");
       } else {
-        setApplied(null);
         setPromoStatus("bad");
         setPromoMsg(data.error || "Невалиден промокод");
       }
@@ -85,10 +106,9 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
     }
   };
 
-  // Re-validate when the chosen size changes (price differs)
-  const removePromo = () => {
-    setApplied(null);
-    setPromoInput("");
+  const removePromo = (code?: string) => {
+    if (code) setApplied(prev => prev.filter(a => a.code !== code));
+    else setApplied([]);
     setPromoStatus("idle");
     setPromoMsg("");
   };
@@ -103,7 +123,7 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
         body: JSON.stringify({
           ...form,
           items: [{ productId: item.id, name: item.name, nameBg: item.nameBg, volume: chosenSize, price: chosenPrice }],
-          promoCode: applied?.code || null,
+          promoCodes: applied.map(a => a.code),
         }),
       });
       if (!res.ok) throw new Error();
@@ -156,34 +176,26 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
 
           <div className="flex justify-between items-center">
             <span className="text-[#F5ECD7] text-sm">{itemName} — {chosenSize}</span>
-            <span className={`font-semibold ${applied ? "text-[#F5ECD7]/40 line-through text-sm" : "text-[#C9A84C]"}`}>
+            <span className={`font-semibold ${applied.length > 0 ? "text-[#F5ECD7]/40 line-through text-sm" : "text-[#C9A84C]"}`}>
               {formatPrice(chosenPrice)}
             </span>
           </div>
 
-          {/* Promo code */}
-          <div className="mt-3 pt-3 border-t border-[#2A2418]/60">
-            {applied ? (
-              <div className="flex flex-col gap-1">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-emerald-400 flex items-center gap-1.5">
-                    ✓ {applied.code}
-                    <button type="button" onClick={removePromo} className="text-[#F5ECD7]/30 hover:text-red-400 text-xs underline">
-                      {locale === "bg" ? "премахни" : "remove"}
-                    </button>
-                  </span>
-                  {applied.note ? (
-                    <span className="text-emerald-400">{applied.note}</span>
-                  ) : (
-                    <span className="text-emerald-400">− {formatPrice(applied.discount)}</span>
-                  )}
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-[#C9A84C] tracking-widest uppercase">{t("total")}</span>
-                  <span className="text-[#C9A84C] font-bold text-lg">{formatPrice(applied.finalTotal)}</span>
-                </div>
+          {/* Promo codes — up to 2 (1 wheel + 1 standard) */}
+          <div className="mt-3 pt-3 border-t border-[#2A2418]/60 flex flex-col gap-2">
+            {applied.map(a => (
+              <div key={a.code} className="flex justify-between items-center text-sm">
+                <span className="text-emerald-400 flex items-center gap-1.5">
+                  ✓ {a.code}
+                  <button type="button" onClick={() => removePromo(a.code)} className="text-[#F5ECD7]/30 hover:text-red-400 text-xs underline">
+                    {locale === "bg" ? "премахни" : "remove"}
+                  </button>
+                </span>
+                {a.note ? <span className="text-emerald-400">{a.note}</span> : <span className="text-emerald-400">− {formatPrice(a.discount)}</span>}
               </div>
-            ) : (
+            ))}
+
+            {applied.length < 2 && (
               <>
                 <div className="flex gap-2">
                   <input
@@ -202,8 +214,15 @@ export default function RequestModal({ item, onClose, initialVariant = 0 }: { it
                     {promoStatus === "loading" ? "..." : t("promoApply")}
                   </button>
                 </div>
-                {promoStatus === "bad" && <p className="text-red-400 text-xs mt-1.5">{promoMsg}</p>}
+                {promoStatus === "bad" && <p className="text-red-400 text-xs">{promoMsg}</p>}
               </>
+            )}
+
+            {applied.length > 0 && (
+              <div className="flex justify-between items-center pt-2 border-t border-[#2A2418]/60">
+                <span className="text-xs text-[#C9A84C] tracking-widest uppercase">{t("total")}</span>
+                <span className="text-[#C9A84C] font-bold text-lg">{formatPrice(finalTotal)}</span>
+              </div>
             )}
           </div>
         </div>

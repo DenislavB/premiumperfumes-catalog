@@ -30,6 +30,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Name and email required" }, { status: 400 });
     }
 
+    // One wheel code per email — prevent farming
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const existing = await prisma.spinEntry.findFirst({ where: { email: normalizedEmail } });
+    if (existing) {
+      return NextResponse.json({
+        duplicate: true,
+        message: "Този имейл вече е участвал в играта.",
+        code: existing.code,
+      });
+    }
+
     const prize = PRIZES[idx];
 
     // Generate a single-use promo code for EVERY prize
@@ -42,6 +53,7 @@ export async function POST(req: NextRequest) {
         discountType: prize.type, // "percent" | "fixed" | "freebie"
         discountValue: prize.value,
         note: prize.type === "freebie" ? prize.label : null,
+        source: "wheel",
         usageLimit: 1,
         expiresAt: expires,
         active: true,
@@ -51,7 +63,7 @@ export async function POST(req: NextRequest) {
     await prisma.spinEntry.create({
       data: {
         name: name || null,
-        email: email || null,
+        email: normalizedEmail,
         phone: phone || null,
         prize: prize.label,
         code,

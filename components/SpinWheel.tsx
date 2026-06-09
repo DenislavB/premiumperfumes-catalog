@@ -63,6 +63,10 @@ export default function SpinWheel({ onClose }: { onClose?: () => void }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error();
+      if (data.duplicate) {
+        setError(bg ? "Този имейл вече е участвал в играта." : "This email has already played.");
+        return;
+      }
       setResult({ prize: data.prize, code: data.code });
       setPhase("claimed");
     } catch {
