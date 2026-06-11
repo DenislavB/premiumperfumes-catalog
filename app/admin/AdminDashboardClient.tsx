@@ -11,6 +11,17 @@ function num(n: number) {
   return Number.isInteger(n) ? String(n) : n.toFixed(2);
 }
 
+// Date + time, e.g. "11.06.2026, 14:30"
+function dateTime(d: string) {
+  return new Date(d).toLocaleString("bg-BG", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 // Variant price summary, sorted low→high. Returns { prices, sizes }
 function priceSummary(product: { price: number; variants?: { size: string; price: number }[] }) {
   const v = product.variants;
@@ -516,7 +527,7 @@ export default function AdminDashboardClient({
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-[#F5ECD7]/30 text-xs">
-                          {new Date(req.createdAt).toLocaleDateString("bg-BG")}
+                          {dateTime(req.createdAt)}
                         </span>
                         <select
                           value={req.status}
@@ -600,7 +611,7 @@ export default function AdminDashboardClient({
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-[#F5ECD7]/30 text-xs">
-                        {new Date(msg.createdAt).toLocaleDateString("bg-BG")}
+                        {dateTime(msg.createdAt)}
                       </span>
                       <button
                         onClick={() => markMessageRead(msg.id, !msg.read)}
@@ -697,6 +708,7 @@ export default function AdminDashboardClient({
                       <span className="text-[#F5ECD7]/30 text-xs">
                         употреби: {promo.usageCount}{promo.usageLimit !== null ? ` / ${promo.usageLimit}` : ""}
                       </span>
+                      <span className="text-[#F5ECD7]/30 text-xs">създаден: {dateTime(promo.createdAt)}</span>
                       {(expired || exhausted) && (
                         <span className="text-red-400/70 text-xs border border-red-500/30 px-1.5 py-0.5">
                           {expired ? "изтекъл" : "изчерпан"}
@@ -759,7 +771,7 @@ export default function AdminDashboardClient({
                       <td className="px-4 py-3 text-sm">
                         {s.marketing ? <span className="text-emerald-400">✓ Да</span> : <span className="text-[#F5ECD7]/30">Не</span>}
                       </td>
-                      <td className="px-4 py-3 text-[#F5ECD7]/30 text-xs">{new Date(s.createdAt).toLocaleDateString("bg-BG")}</td>
+                      <td className="px-4 py-3 text-[#F5ECD7]/30 text-xs">{dateTime(s.createdAt)}</td>
                     </tr>
                   ))}
                   {spins.length === 0 && (
