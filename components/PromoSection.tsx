@@ -4,11 +4,14 @@ import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice, TESTER_SIZE } from "@/lib/utils";
+import { useCart } from "@/lib/cart";
 import type { Product } from "@/lib/types";
 
-export default function PromoSection({ products, onRequest }: { products: Product[]; onRequest: (p: Product) => void }) {
+export default function PromoSection({ products }: { products: Product[] }) {
   const t = useTranslations("catalog");
+  const tc = useTranslations("cart");
   const locale = useLocale();
+  const { add } = useCart();
 
   // Up to 3 featured products
   const featured = products.filter(p => p.featured && p.available).slice(0, 3);
@@ -17,6 +20,16 @@ export default function PromoSection({ products, onRequest }: { products: Produc
   const priceFrom = (p: Product) => {
     const full = p.variants?.filter(v => v.size !== TESTER_SIZE) ?? [];
     return full.length > 0 ? Math.min(...full.map(v => v.price)) : p.price;
+  };
+
+  const addToCart = (p: Product) => {
+    const full = p.variants?.filter(v => v.size !== TESTER_SIZE) ?? [];
+    const first = full[0] || p.variants?.[0];
+    add({
+      productId: p.id, name: p.name, nameBg: p.nameBg, brand: p.brand, slug: p.slug,
+      image: p.images[0] || "", size: first?.size ?? p.volume, price: first?.price ?? p.price,
+      variants: p.variants || [],
+    });
   };
 
   return (
@@ -99,10 +112,10 @@ export default function PromoSection({ products, onRequest }: { products: Produc
                       {locale === "bg" ? "от " : "from "}{formatPrice(priceFrom(p))}
                     </p>
                     <button
-                      onClick={() => onRequest(p)}
+                      onClick={() => addToCart(p)}
                       className="w-full text-xs tracking-widest uppercase py-3 border border-[#C9A84C] text-[#C9A84C] hover:bg-[#C9A84C] hover:text-[#0D0B08] transition-all duration-300"
                     >
-                      {t("requestBtn")}
+                      {tc("addToCart")}
                     </button>
                   </div>
                 </div>

@@ -9,6 +9,15 @@
     "subtitle": "Discover the art of Arabian perfumery — rare oud, precious musks, and timeless elegance.",
     "cta": "Explore Collection"
   },
+  "cart": {
+    "title": "Cart",
+    "empty": "Your cart is empty.",
+    "total": "Total",
+    "checkout": "Send purchase request",
+    "addToCart": "Add to cart",
+    "continue": "Continue shopping",
+    "remove": "Remove"
+  },
   "catalog": {
     "title": "Our Collection",
     "all": "All",

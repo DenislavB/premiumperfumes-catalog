@@ -19,7 +19,7 @@ function getTransport() {
 const FROM = `Premium Perfumes <${process.env.SMTP_USER || "info@premiumperfumes.bg"}>`;
 const ADMIN_EMAIL = process.env.SMTP_USER || "info@premiumperfumes.bg";
 
-type OrderItem = { name: string; volume: string; price: number };
+type OrderItem = { name: string; volume: string; price: number; qty?: number };
 
 type OrderEmailData = {
   to: string;
@@ -45,13 +45,13 @@ export async function sendOrderEmails(data: OrderEmailData) {
     return;
   }
 
-  const subtotal = data.items.reduce((s, it) => s + (it.price || 0), 0);
+  const subtotal = data.items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
   const total = data.discount ? Math.max(0, subtotal - data.discount) : subtotal;
 
   const itemsRows = data.items
     .map(
       (it) =>
-        `<tr><td style="padding:6px 0;color:#444">${it.name} — ${it.volume}</td><td style="padding:6px 0;text-align:right;color:#9A7A2E;font-weight:600">${fmt(it.price)}</td></tr>`
+        `<tr><td style="padding:6px 0;color:#444">${it.name} — ${it.volume}${(it.qty || 1) > 1 ? ` × ${it.qty}` : ""}</td><td style="padding:6px 0;text-align:right;color:#9A7A2E;font-weight:600">${fmt(it.price * (it.qty || 1))}</td></tr>`
     )
     .join("");
 
@@ -105,7 +105,7 @@ export async function sendOrderEmails(data: OrderEmailData) {
 
   // 2) Notification to the shop
   try {
-    const itemsText = data.items.map((it) => `${it.name} — ${it.volume}: ${fmt(it.price)}`).join("\n");
+    const itemsText = data.items.map((it) => `${it.name} — ${it.volume}${(it.qty || 1) > 1 ? ` × ${it.qty}` : ""}: ${fmt(it.price * (it.qty || 1))}`).join("\n");
     await transport.sendMail({
       from: FROM,
       to: ADMIN_EMAIL,

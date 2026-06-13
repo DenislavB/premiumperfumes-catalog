@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import ProductCard from "@/components/ProductCard";
-import RequestModal from "@/components/RequestModal";
 import ContactForm from "@/components/ContactForm";
 import PromoSection from "@/components/PromoSection";
 import SpinWheelOverlay from "@/components/SpinWheelOverlay";
@@ -15,7 +14,6 @@ type Filter = typeof FILTERS[number];
 export default function CatalogClient({ products, locale }: { products: Product[]; locale: string }) {
   const t = useTranslations();
   const [filter, setFilter] = useState<Filter>("all");
-  const [requestItem, setRequestItem] = useState<Product | null>(null);
 
   const filtered = products.filter(p => {
     if (filter === "all") return true;
@@ -66,7 +64,7 @@ export default function CatalogClient({ products, locale }: { products: Product[
       </section>
 
       {/* Promo / Featured */}
-      <PromoSection products={products} onRequest={p => setRequestItem(p)} />
+      <PromoSection products={products} />
 
       {/* Catalog */}
       <section id="catalog" className="py-24 px-6">
@@ -112,7 +110,7 @@ export default function CatalogClient({ products, locale }: { products: Product[
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {filtered.map(p => (
-                <ProductCard key={p.id} product={p} onRequest={p => setRequestItem(p)} />
+                <ProductCard key={p.id} product={p} />
               ))}
             </div>
           )}
@@ -175,8 +173,6 @@ export default function CatalogClient({ products, locale }: { products: Product[
           <ContactForm />
         </div>
       </section>
-
-      <RequestModal item={requestItem} onClose={() => setRequestItem(null)} />
     </>
   );
 }

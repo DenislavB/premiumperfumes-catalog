@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
-import RequestModal from "@/components/RequestModal";
+import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
 
 type Product = {
@@ -33,8 +33,9 @@ type Product = {
 
 export default function ProductDetailClient({ product, locale }: { product: Product; locale: string }) {
   const t = useTranslations();
+  const tc = useTranslations("cart");
+  const { add } = useCart();
   const [imgIdx, setImgIdx] = useState(0);
-  const [showModal, setShowModal] = useState(false);
 
   const hasVariants = product.variants && product.variants.length > 0;
   const [selectedVariant, setSelectedVariant] = useState(0);
@@ -42,6 +43,16 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
   const name = product.name; // Always English
   const description = locale === "bg" ? product.descriptionBg : product.description;
   const isOutOfStock = !product.available;
+
+  const addToCart = () => {
+    if (isOutOfStock) return;
+    const size = hasVariants ? product.variants[selectedVariant].size : product.volume;
+    const price = hasVariants ? product.variants[selectedVariant].price : product.price;
+    add({
+      productId: product.id, name: product.name, nameBg: product.nameBg, brand: product.brand,
+      slug: product.slug, image: product.images[0] || "", size, price, variants: product.variants || [],
+    });
+  };
 
   const displayPrice = hasVariants ? product.variants[selectedVariant].price : product.price;
 
@@ -169,11 +180,11 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
               </div>
 
               <button
-                onClick={() => !isOutOfStock && setShowModal(true)}
+                onClick={addToCart}
                 disabled={isOutOfStock}
                 className="w-full py-4 bg-[#C9A84C] text-[#0D0B08] text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors disabled:opacity-30 disabled:cursor-not-allowed mb-8"
               >
-                {isOutOfStock ? t("catalog.outOfStock") : t("product.requestBtn")}
+                {isOutOfStock ? t("catalog.outOfStock") : tc("addToCart")}
               </button>
 
               <div className="h-px bg-[#2A2418] mb-6" />
@@ -203,8 +214,6 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
           </div>
         </div>
       </div>
-
-      {showModal && <RequestModal item={product} initialVariant={selectedVariant} onClose={() => setShowModal(false)} />}
     </>
   );
 }

@@ -4,14 +4,28 @@ import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { ShoppingBag } from "lucide-react";
+import { useCart } from "@/lib/cart";
 
 export default function Navbar() {
   const t = useTranslations("nav");
   const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
+  const { count, setOpen } = useCart();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const CartButton = () => (
+    <button onClick={() => setOpen(true)} className="relative text-[#F5ECD7]/80 hover:text-[#C9A84C] transition-colors" aria-label="Cart">
+      <ShoppingBag size={20} />
+      {count > 0 && (
+        <span className="absolute -top-2 -right-2 bg-[#C9A84C] text-[#0D0B08] text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+          {count}
+        </span>
+      )}
+    </button>
+  );
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -73,10 +87,12 @@ export default function Navbar() {
           >
             {otherLocale.toUpperCase()}
           </button>
+          <CartButton />
         </nav>
 
         {/* Mobile */}
         <div className="md:hidden flex items-center gap-4">
+          <CartButton />
           <button onClick={switchLocale} className="text-xs text-[#C9A84C] border border-[#C9A84C]/40 px-2 py-1">
             {otherLocale.toUpperCase()}
           </button>

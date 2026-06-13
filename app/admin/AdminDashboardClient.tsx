@@ -524,7 +524,8 @@ export default function AdminDashboardClient({
 
             <div className="flex flex-col gap-4">
               {requests.filter(r => showArchived ? r.archived : !r.archived).map(req => {
-                const items = req.items as { name: string; nameBg: string; volume: string; price: number }[];
+                const items = req.items as { name: string; nameBg: string; volume: string; price: number; qty?: number }[];
+                const itemsTotal = items.reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
                 const statusBorder = req.status === "new"
                   ? "border-l-yellow-400/70"
                   : req.status === "contacted"
@@ -588,11 +589,11 @@ export default function AdminDashboardClient({
                       <p className="text-xs text-[#C9A84C] tracking-widest uppercase mb-2">Артикули</p>
                       {items.map((item, i) => (
                         <div key={i} className="flex justify-between text-sm py-1">
-                          <span className="text-[#F5ECD7]/70">{item.name} — {item.volume}</span>
-                          <span className="text-[#C9A84C]">{formatPrice(item.price)}</span>
+                          <span className="text-[#F5ECD7]/70">{item.name} — {item.volume}{(item.qty || 1) > 1 ? ` × ${item.qty}` : ""}</span>
+                          <span className="text-[#C9A84C]">{formatPrice(item.price * (item.qty || 1))}</span>
                         </div>
                       ))}
-                      {req.promoCode && req.discount != null && (
+                      {req.promoCode && req.discount != null ? (
                         <>
                           <div className="flex justify-between text-sm py-1 text-emerald-400">
                             <span>Промокод: {req.promoCode}</span>
@@ -600,11 +601,14 @@ export default function AdminDashboardClient({
                           </div>
                           <div className="flex justify-between text-sm py-1 mt-1 pt-2 border-t border-[#2A2418] font-semibold">
                             <span className="text-[#F5ECD7]">Крайна цена</span>
-                            <span className="text-[#C9A84C]">
-                              {formatPrice(items.reduce((s, it) => s + (it.price || 0), 0) - req.discount)}
-                            </span>
+                            <span className="text-[#C9A84C]">{formatPrice(itemsTotal - req.discount)}</span>
                           </div>
                         </>
+                      ) : items.length > 1 && (
+                        <div className="flex justify-between text-sm py-1 mt-1 pt-2 border-t border-[#2A2418] font-semibold">
+                          <span className="text-[#F5ECD7]">Общо</span>
+                          <span className="text-[#C9A84C]">{formatPrice(itemsTotal)}</span>
+                        </div>
                       )}
                     </div>
 

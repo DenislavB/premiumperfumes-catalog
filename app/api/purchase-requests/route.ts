@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const orderTotal = (items as { price: number }[]).reduce((s, it) => s + (it.price || 0), 0);
+  const orderTotal = (items as { price: number; qty?: number }[]).reduce((s, it) => s + (it.price || 0) * (it.qty || 1), 0);
 
   // Re-validate each promo code server-side. Rule: max 1 "wheel" + 1 "standard".
   const acceptedCodes: string[] = [];

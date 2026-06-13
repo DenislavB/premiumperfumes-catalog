@@ -4,11 +4,14 @@ import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice, TESTER_SIZE } from "@/lib/utils";
+import { useCart } from "@/lib/cart";
 import type { Product } from "@/lib/types";
 
-export default function ProductCard({ product, onRequest }: { product: Product; onRequest: (p: Product) => void }) {
+export default function ProductCard({ product }: { product: Product }) {
   const t = useTranslations("catalog");
+  const tc = useTranslations("cart");
   const locale = useLocale();
+  const { add } = useCart();
   const name = product.name; // Always English
   const isOutOfStock = !product.available;
   const hasVariants = product.variants && product.variants.length > 0;
@@ -19,6 +22,23 @@ export default function ProductCard({ product, onRequest }: { product: Product; 
   const minVariantPrice = fullSizeVariants.length > 0
     ? Math.min(...fullSizeVariants.map(v => v.price))
     : product.price;
+
+  const addToCart = () => {
+    if (isOutOfStock) return;
+    // Default to the first full-size variant (or base price)
+    const first = fullSizeVariants[0] || product.variants?.[0];
+    add({
+      productId: product.id,
+      name: product.name,
+      nameBg: product.nameBg,
+      brand: product.brand,
+      slug: product.slug,
+      image: product.images[0] || "",
+      size: first?.size ?? product.volume,
+      price: first?.price ?? product.price,
+      variants: product.variants || [],
+    });
+  };
 
   return (
     <div className="group relative bg-[#161410] border border-[#2A2418] hover:border-[#C9A84C]/50 transition-all duration-500 overflow-hidden">
@@ -93,11 +113,11 @@ export default function ProductCard({ product, onRequest }: { product: Product; 
         </div>
 
         <button
-          onClick={() => !isOutOfStock && onRequest(product)}
+          onClick={addToCart}
           disabled={isOutOfStock}
           className="w-full text-xs tracking-widest uppercase py-2.5 border transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed border-[#C9A84C]/50 text-[#C9A84C] hover:bg-[#C9A84C] hover:text-[#0D0B08]"
         >
-          {t("requestBtn")}
+          {tc("addToCart")}
         </button>
       </div>
     </div>

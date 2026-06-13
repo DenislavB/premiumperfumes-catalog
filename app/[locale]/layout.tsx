@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CookieConsent from "@/components/CookieConsent";
+import { CartProvider } from "@/lib/cart";
+import CartDrawer from "@/components/CartDrawer";
 
 const locales = ["en", "bg"];
 
@@ -20,10 +22,13 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <Navbar />
-      <main className="flex-1">{children}</main>
-      <Footer />
-      <CookieConsent />
+      <CartProvider>
+        <Navbar />
+        <main className="flex-1">{children}</main>
+        <Footer />
+        <CartDrawer />
+        <CookieConsent />
+      </CartProvider>
     </NextIntlClientProvider>
   );
 }
