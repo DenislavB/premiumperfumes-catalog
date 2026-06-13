@@ -165,6 +165,12 @@ export default function CatalogClient({ products, locale }: { products: Product[
               {t("nav.contact")}
             </h2>
             <p className="text-[#F5ECD7]/50">{t("contactForm.subtitle")}</p>
+            <a
+              href="mailto:info@premiumperfumes.bg"
+              className="inline-block mt-4 text-[#C9A84C] text-sm tracking-wider hover:text-[#E8D5A3] transition-colors"
+            >
+              ✉ info@premiumperfumes.bg
+            </a>
           </div>
           <ContactForm />
         </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { sendOrderEmails } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -61,6 +62,23 @@ export async function POST(req: NextRequest) {
       discount: acceptedCodes.length ? discount : null,
     },
   });
+
+  // Send confirmation to customer + notification to shop (non-blocking on failure)
+  try {
+    await sendOrderEmails({
+      to: email || "",
+      name,
+      phone,
+      email,
+      courier,
+      address,
+      items: items as { name: string; volume: string; price: number }[],
+      promoCode: acceptedCodes.length ? acceptedCodes.join(", ") : null,
+      discount: acceptedCodes.length ? discount : null,
+    });
+  } catch (e) {
+    console.error("Order emails error:", e);
+  }
 
   return NextResponse.json(request, { status: 201 });
 }
