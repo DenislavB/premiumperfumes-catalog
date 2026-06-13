@@ -54,6 +54,7 @@ model PurchaseRequest {
   promoCode String?  // code applied to this order
   discount  Float?   // discount amount in EUR
   status    String   @default("new")
+  archived  Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 

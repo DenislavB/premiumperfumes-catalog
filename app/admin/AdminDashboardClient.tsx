@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
-import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket, Star, Gift } from "lucide-react";
+import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket, Star, Gift, Archive } from "lucide-react";
 import ProductFormModal from "./ProductFormModal";
 
 // Format a number as a compact price (no currency, drop trailing .00)
@@ -70,6 +70,7 @@ type Request = {
   promoCode: string | null;
   discount: number | null;
   status: string;
+  archived: boolean;
   createdAt: string;
 };
 
@@ -132,6 +133,7 @@ export default function AdminDashboardClient({
   const [spins] = useState(initialSpins);
   const [newPromo, setNewPromo] = useState({ code: "", discountType: "percent", discountValue: "", minOrder: "", expiresAt: "", usageLimit: "" });
   const [promoError, setPromoError] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -185,6 +187,15 @@ export default function AdminDashboardClient({
       body: JSON.stringify({ status }),
     });
     setRequests(rs => rs.map(r => r.id === id ? { ...r, status } : r));
+  };
+
+  const archiveRequest = async (id: string, archived: boolean) => {
+    await fetch(`/api/purchase-requests/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ archived }),
+    });
+    setRequests(rs => rs.map(r => r.id === id ? { ...r, archived } : r));
   };
 
   const onSaved = (product: Product) => {
@@ -248,7 +259,7 @@ export default function AdminDashboardClient({
     setPromos(ps => ps.filter(p => p.id !== id));
   };
 
-  const newRequests = requests.filter(r => r.status === "new").length;
+  const newRequests = requests.filter(r => r.status === "new" && !r.archived).length;
   const unreadMessages = messages.filter(m => !m.read).length;
 
   const navItems = [
@@ -492,16 +503,35 @@ export default function AdminDashboardClient({
 
         {tab === "requests" && (
           <div className="p-4 md:p-8">
-            <div className="hidden md:block mb-8">
-              <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Заявки за покупка</h1>
-              <p className="text-[#F5ECD7]/30 text-sm mt-1">{requests.length} общо заявки</p>
+            <div className="flex items-center justify-between mb-6 md:mb-8 gap-4 flex-wrap">
+              <div className="hidden md:block">
+                <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Заявки за покупка</h1>
+                <p className="text-[#F5ECD7]/30 text-sm mt-1">
+                  {requests.filter(r => !r.archived).length} активни · {requests.filter(r => r.archived).length} архивирани
+                </p>
+              </div>
+              <button
+                onClick={() => setShowArchived(v => !v)}
+                className={`text-xs tracking-widest uppercase px-4 py-2 border transition-colors ${
+                  showArchived
+                    ? "bg-[#C9A84C] text-[#0D0B08] border-[#C9A84C]"
+                    : "border-[#2A2418] text-[#F5ECD7]/50 hover:border-[#C9A84C]/40 hover:text-[#C9A84C]"
+                }`}
+              >
+                {showArchived ? "← Активни заявки" : "Архивирани"}
+              </button>
             </div>
 
             <div className="flex flex-col gap-4">
-              {requests.map(req => {
+              {requests.filter(r => showArchived ? r.archived : !r.archived).map(req => {
                 const items = req.items as { name: string; nameBg: string; volume: string; price: number }[];
+                const statusBorder = req.status === "new"
+                  ? "border-l-yellow-400/70"
+                  : req.status === "contacted"
+                  ? "border-l-blue-400/70"
+                  : "border-l-emerald-400/70";
                 return (
-                  <div key={req.id} className="bg-[#161410] border border-[#2A2418] p-4 md:p-6">
+                  <div key={req.id} className={`bg-[#161410] border border-[#2A2418] border-l-4 ${statusBorder} p-4 md:p-6`}>
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div>
                         <p className="text-[#F5ECD7] font-medium">{req.name}</p>
@@ -532,12 +562,25 @@ export default function AdminDashboardClient({
                         <select
                           value={req.status}
                           onChange={e => updateRequestStatus(req.id, e.target.value)}
-                          className="text-xs px-2 py-1 rounded-none border-[#2A2418]"
+                          className={`text-xs px-2 py-1 rounded-none border font-medium ${
+                            req.status === "new"
+                              ? "border-yellow-400/40 text-yellow-300"
+                              : req.status === "contacted"
+                              ? "border-blue-400/40 text-blue-300"
+                              : "border-emerald-400/40 text-emerald-300"
+                          }`}
                         >
                           <option value="new">Нова</option>
                           <option value="contacted">Свързахме се</option>
                           <option value="fulfilled">Изпълнена</option>
                         </select>
+                        <button
+                          onClick={() => archiveRequest(req.id, !req.archived)}
+                          title={req.archived ? "Възстанови" : "Архивирай"}
+                          className="text-[#F5ECD7]/40 hover:text-[#C9A84C] transition-colors p-1"
+                        >
+                          <Archive size={15} />
+                        </button>
                       </div>
                     </div>
 
@@ -574,8 +617,10 @@ export default function AdminDashboardClient({
                   </div>
                 );
               })}
-              {requests.length === 0 && (
-                <div className="text-center py-16 text-[#F5ECD7]/20">Няма заявки все още.</div>
+              {requests.filter(r => showArchived ? r.archived : !r.archived).length === 0 && (
+                <div className="text-center py-16 text-[#F5ECD7]/20">
+                  {showArchived ? "Няма архивирани заявки." : "Няма активни заявки."}
+                </div>
               )}
             </div>
           </div>

@@ -7,7 +7,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!session.isAdmin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const { status } = await req.json();
-  const updated = await prisma.purchaseRequest.update({ where: { id }, data: { status } });
+  const body = await req.json();
+  const data: Record<string, unknown> = {};
+  if (body.status !== undefined) data.status = body.status;
+  if (body.archived !== undefined) data.archived = body.archived;
+  const updated = await prisma.purchaseRequest.update({ where: { id }, data });
   return NextResponse.json(updated);
 }
