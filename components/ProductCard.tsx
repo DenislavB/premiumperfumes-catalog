@@ -7,7 +7,7 @@ import { formatPrice, TESTER_SIZE } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
 import type { Product } from "@/lib/types";
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product, decantMode = false }: { product: Product; decantMode?: boolean }) {
   const t = useTranslations("catalog");
   const tc = useTranslations("cart");
   const locale = useLocale();
@@ -23,10 +23,14 @@ export default function ProductCard({ product }: { product: Product }) {
     ? Math.min(...fullSizeVariants.map(v => v.price))
     : product.price;
 
+  const decantVariant = product.variants?.find(v => v.size === TESTER_SIZE);
+
   const addToCart = () => {
     if (isOutOfStock) return;
-    // Default to the first full-size variant (or base price)
-    const first = fullSizeVariants[0] || product.variants?.[0];
+    // In decant mode add the decant; otherwise the first full-size variant
+    const chosen = decantMode && decantVariant
+      ? decantVariant
+      : fullSizeVariants[0] || product.variants?.[0];
     add({
       productId: product.id,
       name: product.name,
@@ -34,8 +38,8 @@ export default function ProductCard({ product }: { product: Product }) {
       brand: product.brand,
       slug: product.slug,
       image: product.images[0] || "",
-      size: first?.size ?? product.volume,
-      price: first?.price ?? product.price,
+      size: chosen?.size ?? product.volume,
+      price: chosen?.price ?? product.price,
       variants: product.variants || [],
     });
   };
@@ -98,7 +102,11 @@ export default function ProductCard({ product }: { product: Product }) {
         )}
 
         <div className="flex items-baseline gap-2 mb-4">
-          {hasVariants ? (
+          {decantMode && decantVariant ? (
+            <span className="text-[#C9A84C] text-lg font-semibold">
+              {TESTER_SIZE} — {formatPrice(decantVariant.price)}
+            </span>
+          ) : hasVariants ? (
             <span className="text-[#C9A84C] text-lg font-semibold">
               {locale === "bg" ? "от " : "from "}{formatPrice(minVariantPrice)}
             </span>
@@ -117,7 +125,7 @@ export default function ProductCard({ product }: { product: Product }) {
           disabled={isOutOfStock}
           className="w-full text-xs tracking-widest uppercase py-2.5 border transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed border-[#C9A84C]/50 text-[#C9A84C] hover:bg-[#C9A84C] hover:text-[#0D0B08]"
         >
-          {tc("addToCart")}
+          {decantMode ? (locale === "bg" ? "Добави отливка" : "Add decant") : tc("addToCart")}
         </button>
       </div>
     </div>
