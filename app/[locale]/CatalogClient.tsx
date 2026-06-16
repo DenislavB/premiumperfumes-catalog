@@ -30,7 +30,7 @@ export default function CatalogClient({ products, locale }: { products: Product[
       <SpinWheelOverlay />
 
       {/* Hero */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative h-[88vh] md:h-[85vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0D0B08] via-[#1A1410] to-[#0D0B08]" />
         <div
           className="absolute inset-0 opacity-5"
