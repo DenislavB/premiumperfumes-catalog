@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
 
   // Re-validate each promo code server-side. Rule: max 1 "wheel" + 1 "standard".
   const acceptedCodes: string[] = [];
+  const vouchers: string[] = []; // freebie labels (e.g. "Безплатна отливка...") for the shop to honor
   let discount = 0;
   const usedSources = new Set<string>();
 
@@ -46,7 +47,7 @@ export async function POST(req: NextRequest) {
       acceptedCodes.push(promo.code);
       if (promo.discountType === "percent") discount += (orderTotal * promo.discountValue) / 100;
       else if (promo.discountType === "fixed") discount += promo.discountValue;
-      // freebie adds 0
+      else if (promo.discountType === "freebie") vouchers.push(promo.note || "Подарък"); // adds 0, honored manually
       await prisma.promoCode.update({ where: { id: promo.id }, data: { usageCount: { increment: 1 } } });
     }
   }
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
       items: items as { name: string; volume: string; price: number }[],
       promoCode: acceptedCodes.length ? acceptedCodes.join(", ") : null,
       discount: acceptedCodes.length ? discount : null,
+      vouchers,
     });
   } catch (e) {
     console.error("Order emails error:", e);

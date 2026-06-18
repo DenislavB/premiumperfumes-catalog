@@ -31,6 +31,7 @@ type OrderEmailData = {
   items: OrderItem[];
   promoCode?: string | null;
   discount?: number | null;
+  vouchers?: string[]; // freebie labels (free decant / free shipping) to honor
 };
 
 function fmt(n: number) {
@@ -59,6 +60,10 @@ export async function sendOrderEmails(data: OrderEmailData) {
     ? `<tr><td style="padding:6px 0;color:#2e7d32">Промокод ${data.promoCode}</td><td style="padding:6px 0;text-align:right;color:#2e7d32">− ${fmt(data.discount)}</td></tr>`
     : "";
 
+  const voucherRows = (data.vouchers || [])
+    .map(v => `<tr><td style="padding:6px 0;color:#9A7A2E" colspan="2">🎁 ${v}</td></tr>`)
+    .join("");
+
   const deliveryLine = data.courier
     ? `<p style="margin:4px 0;color:#555"><strong>Доставка:</strong> ${data.courier}${data.address ? ` — ${data.address}` : ""}</p>`
     : "";
@@ -76,6 +81,7 @@ export async function sendOrderEmails(data: OrderEmailData) {
       <table style="width:100%;border-collapse:collapse;margin:20px 0;border-top:1px solid #eee;border-bottom:1px solid #eee">
         ${itemsRows}
         ${discountRow}
+        ${voucherRows}
         <tr><td style="padding:10px 0;font-weight:bold;border-top:2px solid #0D0B08">Общо</td><td style="padding:10px 0;text-align:right;font-weight:bold;border-top:2px solid #0D0B08;color:#0D0B08">${fmt(total)}</td></tr>
       </table>
 
@@ -117,7 +123,7 @@ export async function sendOrderEmails(data: OrderEmailData) {
 Телефон: ${data.phone}
 Имейл: ${data.email || "—"}
 Доставка: ${data.courier || "—"}${data.address ? ` — ${data.address}` : ""}
-${data.promoCode ? `Промокод: ${data.promoCode} (− ${fmt(data.discount || 0)})\n` : ""}
+${data.promoCode ? `Промокод: ${data.promoCode} (− ${fmt(data.discount || 0)})\n` : ""}${(data.vouchers || []).length ? `ПОДАРЪК (добави в пратката): ${data.vouchers!.join(", ")}\n` : ""}
 Артикули:
 ${itemsText}
 

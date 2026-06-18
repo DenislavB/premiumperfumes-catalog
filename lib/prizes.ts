@@ -11,10 +11,10 @@ export type Prize = {
 // Order = wheel segment order (index 0 at the top, going clockwise)
 export const PRIZES: Prize[] = [
   { label: "5% отстъпка",       labelEn: "5% off",        short: "5%",       type: "percent", value: 5,  weight: 26, color: "#C9A84C" },
-  { label: "Безплатна отливка (по наш избор) при поръчка", labelEn: "Free decant (our choice) with purchase", short: "Отливка", type: "freebie", value: 0, weight: 16, color: "#1A1612" },
+  { label: "Безплатна отливка (на случаен принцип) при поръчка", labelEn: "Free decant (random) with purchase", short: "Отливка", type: "freebie", value: 0, weight: 16, color: "#1A1612" },
   { label: "10% отстъпка",      labelEn: "10% off",       short: "10%",      type: "percent", value: 10, weight: 22, color: "#9A7A2E" },
   { label: "−5 € отстъпка",     labelEn: "€5 off",        short: "−5€",      type: "fixed",   value: 5,  weight: 18, color: "#1A1612" },
-  { label: "Безплатна отливка (по наш избор) при поръчка", labelEn: "Free decant (our choice) with purchase", short: "Отливка", type: "freebie", value: 0, weight: 14, color: "#E8D5A3" },
+  { label: "Безплатна отливка (на случаен принцип) при поръчка", labelEn: "Free decant (random) with purchase", short: "Отливка", type: "freebie", value: 0, weight: 14, color: "#E8D5A3" },
   { label: "Безплатна доставка при поръчка", labelEn: "Free shipping with purchase", short: "Доставка", type: "freebie", value: 0, weight: 4, color: "#1A1612" },
 ];
 
