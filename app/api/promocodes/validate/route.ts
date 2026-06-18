@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
-  const { code, total } = await req.json();
+  const { code, total, hasFullSize } = await req.json();
   const normalized = String(code || "").trim().toUpperCase();
   const orderTotal = parseFloat(total) || 0;
 
@@ -20,6 +20,9 @@ export async function POST(req: NextRequest) {
   }
   if (promo.usageLimit !== null && promo.usageCount >= promo.usageLimit) {
     return NextResponse.json({ valid: false, error: "Промокодът е изчерпан" });
+  }
+  if (promo.requiresPurchase && !hasFullSize) {
+    return NextResponse.json({ valid: false, error: "Кодът важи само при поръчка на парфюм (не само отливка)." });
   }
   if (promo.minOrder !== null && orderTotal < promo.minOrder) {
     return NextResponse.json({

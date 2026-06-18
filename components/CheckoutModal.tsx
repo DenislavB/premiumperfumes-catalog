@@ -44,6 +44,7 @@ export default function CheckoutModal({ onClose }: { onClose: () => void }) {
 
   const totalDiscount = applied.reduce((s, a) => s + a.discount, 0);
   const finalTotal = Math.max(0, Math.round((total - totalDiscount) * 100) / 100);
+  const hasFullSize = items.some(i => i.size !== "Отливка");
 
   const applyPromo = async () => {
     if (!promoInput.trim()) return;
@@ -58,7 +59,7 @@ export default function CheckoutModal({ onClose }: { onClose: () => void }) {
       const res = await fetch("/api/promocodes/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: promoInput, total }),
+        body: JSON.stringify({ code: promoInput, total, hasFullSize }),
       });
       const data = await res.json();
       if (data.valid) {

@@ -54,3 +54,4 @@ rename-tester.mjs
 check-tester.mjs
 migrate-blob.mjs
 debug-blob.mjs
+fix-freebies.mjs

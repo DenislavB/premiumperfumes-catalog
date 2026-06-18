@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
         discountValue: prize.value,
         note: prize.type === "freebie" ? prize.label : null,
         source: "wheel",
+        requiresPurchase: prize.type === "freebie", // gift-with-purchase only
         usageLimit: 1,
         expiresAt: expires,
         active: true,

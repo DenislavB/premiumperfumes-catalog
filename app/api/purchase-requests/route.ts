@@ -27,6 +27,9 @@ export async function POST(req: NextRequest) {
   // De-duplicate, cap at 2
   const unique = [...new Set(rawCodes.map(c => String(c).trim().toUpperCase()).filter(Boolean))].slice(0, 2);
 
+  // A "full-size" purchase = any item that isn't a decant ("Отливка")
+  const hasFullSize = (items as { volume?: string }[]).some(it => it.volume !== "Отливка");
+
   for (const codeStr of unique) {
     const promo = await prisma.promoCode.findUnique({ where: { code: codeStr } });
     const valid =
@@ -35,6 +38,7 @@ export async function POST(req: NextRequest) {
       (!promo.expiresAt || new Date(promo.expiresAt) >= new Date()) &&
       (promo.usageLimit === null || promo.usageCount < promo.usageLimit) &&
       (promo.minOrder === null || orderTotal >= promo.minOrder) &&
+      (!promo.requiresPurchase || hasFullSize) &&
       !usedSources.has(promo.source); // only one code per source
 
     if (valid && promo) {
