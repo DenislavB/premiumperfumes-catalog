@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
-import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket, Star, Gift, Archive } from "lucide-react";
+import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket, Star, Gift, Archive, Send } from "lucide-react";
 import ProductFormModal from "./ProductFormModal";
 
 // Format a number as a compact price (no currency, drop trailing .00)
@@ -109,7 +109,7 @@ type SpinEntry = {
   createdAt: string;
 };
 
-type Tab = "products" | "requests" | "messages" | "promos" | "spins";
+type Tab = "products" | "requests" | "messages" | "promos" | "spins" | "email";
 
 export default function AdminDashboardClient({
   products: initialProducts,
@@ -134,6 +134,41 @@ export default function AdminDashboardClient({
   const [newPromo, setNewPromo] = useState({ code: "", discountType: "percent", discountValue: "", minOrder: "", expiresAt: "", usageLimit: "" });
   const [promoError, setPromoError] = useState("");
   const [showArchived, setShowArchived] = useState(false);
+
+  // Email compose
+  const [compose, setCompose] = useState({ to: "", subject: "", message: "" });
+  const [emailStatus, setEmailStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [emailError, setEmailError] = useState("");
+
+  const replyTo = (email: string | null, subject: string) => {
+    if (!email) return;
+    setCompose({ to: email, subject, message: "" });
+    setEmailStatus("idle");
+    setEmailError("");
+    setTab("email");
+  };
+
+  const sendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailStatus("sending");
+    setEmailError("");
+    try {
+      const res = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(compose),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Грешка");
+      }
+      setEmailStatus("sent");
+      setCompose({ to: "", subject: "", message: "" });
+    } catch (err) {
+      setEmailStatus("error");
+      setEmailError(err instanceof Error ? err.message : "Грешка");
+    }
+  };
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showNewForm, setShowNewForm] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -268,6 +303,7 @@ export default function AdminDashboardClient({
     { key: "messages" as Tab, label: "Съобщения", icon: Mail, badge: unreadMessages },
     { key: "promos" as Tab, label: "Промокодове", icon: Ticket },
     { key: "spins" as Tab, label: "Игра", icon: Gift },
+    { key: "email" as Tab, label: "Изпрати имейл", icon: Send },
   ];
 
   return (
@@ -344,7 +380,7 @@ export default function AdminDashboardClient({
             <Menu size={22} />
           </button>
           <p className="text-[#C9A84C] text-sm tracking-widest uppercase" style={{ fontFamily: "var(--font-playfair)" }}>
-            {tab === "products" ? "Продукти" : tab === "requests" ? "Заявки" : tab === "messages" ? "Съобщения" : tab === "promos" ? "Промокодове" : "Игра"}
+            {tab === "products" ? "Продукти" : tab === "requests" ? "Заявки" : tab === "messages" ? "Съобщения" : tab === "promos" ? "Промокодове" : tab === "spins" ? "Игра" : "Изпрати имейл"}
           </p>
           <button
             onClick={() => setShowNewForm(true)}
@@ -543,7 +579,12 @@ export default function AdminDashboardClient({
                           </p>
                         )}
                         {req.email && (
-                          <p className="text-[#F5ECD7]/50 text-sm mt-0.5">{req.email}</p>
+                          <p className="text-[#F5ECD7]/50 text-sm mt-0.5 flex items-center gap-2">
+                            {req.email}
+                            <button onClick={() => replyTo(req.email, "Относно Вашата заявка — Premium Perfumes")} className="text-[#C9A84C]/70 hover:text-[#C9A84C] text-xs underline">
+                              имейл
+                            </button>
+                          </p>
                         )}
                         {(req.courier || req.address) && (
                           <p className="text-[#F5ECD7]/40 text-sm flex items-start gap-1 mt-1">
@@ -662,6 +703,14 @@ export default function AdminDashboardClient({
                       <span className="text-[#F5ECD7]/30 text-xs">
                         {dateTime(msg.createdAt)}
                       </span>
+                      {msg.email && (
+                        <button
+                          onClick={() => replyTo(msg.email, "Re: Вашето запитване до Premium Perfumes")}
+                          className="text-xs px-2.5 py-1 border border-[#C9A84C]/40 text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors"
+                        >
+                          Отговори
+                        </button>
+                      )}
                       <button
                         onClick={() => markMessageRead(msg.id, !msg.read)}
                         className="text-xs px-2.5 py-1 border border-[#2A2418] text-[#F5ECD7]/50 hover:border-[#C9A84C]/50 hover:text-[#C9A84C] transition-colors"
@@ -829,6 +878,46 @@ export default function AdminDashboardClient({
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {tab === "email" && (
+          <div className="p-4 md:p-8">
+            <div className="hidden md:block mb-8">
+              <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Изпрати имейл</h1>
+              <p className="text-[#F5ECD7]/30 text-sm mt-1">От info@premiumperfumes.bg</p>
+            </div>
+
+            {emailStatus === "sent" ? (
+              <div className="max-w-xl bg-[#161410] border border-emerald-500/30 p-8 text-center">
+                <div className="text-3xl mb-3 text-emerald-400">✓</div>
+                <p className="text-[#F5ECD7]">Имейлът е изпратен успешно.</p>
+                <button onClick={() => setEmailStatus("idle")} className="mt-5 text-xs tracking-widest uppercase border border-[#C9A84C]/50 text-[#C9A84C] px-6 py-2 hover:bg-[#C9A84C]/10 transition-colors">
+                  Нов имейл
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={sendEmail} className="max-w-xl bg-[#161410] border border-[#2A2418] p-5 md:p-6 flex flex-col gap-4">
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">До (имейл) *</label>
+                  <input required type="email" value={compose.to} onChange={e => setCompose(c => ({ ...c, to: e.target.value }))} placeholder="получател@example.com" className="w-full px-3 py-2.5 text-sm rounded-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Тема *</label>
+                  <input required value={compose.subject} onChange={e => setCompose(c => ({ ...c, subject: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none" />
+                </div>
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Съобщение *</label>
+                  <textarea required rows={10} value={compose.message} onChange={e => setCompose(c => ({ ...c, message: e.target.value }))} className="w-full px-3 py-2.5 text-sm rounded-none resize-y" />
+                  <p className="text-[#F5ECD7]/30 text-xs mt-1.5">Изпраща се с фирмен дизайн (лого и контакти).</p>
+                </div>
+                {emailStatus === "error" && <p className="text-red-400 text-xs">{emailError}</p>}
+                <button type="submit" disabled={emailStatus === "sending"} className="flex items-center justify-center gap-2 bg-[#C9A84C] text-[#0D0B08] px-4 py-3 text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors disabled:opacity-50">
+                  <Send size={14} />
+                  {emailStatus === "sending" ? "Изпращане..." : "Изпрати"}
+                </button>
+              </form>
+            )}
           </div>
         )}
       </main>

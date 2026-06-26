@@ -19,6 +19,49 @@ function getTransport() {
 const FROM = `Premium Perfumes <${process.env.SMTP_USER || "info@premiumperfumes.bg"}>`;
 const ADMIN_EMAIL = process.env.SMTP_USER || "info@premiumperfumes.bg";
 
+// Wrap a plain-text message in the branded HTML template
+function brandedWrapper(text: string) {
+  const safe = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n/g, "<br>");
+  return `
+  <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#fff;color:#222">
+    <div style="background:#0D0B08;padding:24px;text-align:center">
+      <div style="color:#C9A84C;font-size:18px;letter-spacing:4px;font-weight:bold">PREMIUM PERFUMES</div>
+      <div style="color:#9A7A2E;font-size:11px;letter-spacing:3px;margin-top:4px">premiumperfumes.bg</div>
+    </div>
+    <div style="padding:28px;color:#333;line-height:1.7;font-size:15px">${safe}</div>
+    <div style="background:#0D0B08;padding:14px;text-align:center;color:#9A7A2E;font-size:11px">
+      „ОМАЯ 2025" ЕООД · гр. Кюстендил, бул. „Цар Освободител" 91 · info@premiumperfumes.bg
+    </div>
+  </div>`;
+}
+
+// Send a custom email from the shop mailbox (used by the admin compose interface)
+export async function sendCustomEmail({
+  to,
+  subject,
+  message,
+  branded = true,
+}: {
+  to: string;
+  subject: string;
+  message: string;
+  branded?: boolean;
+}) {
+  const transport = getTransport();
+  if (!transport) throw new Error("SMTP not configured");
+  await transport.sendMail({
+    from: FROM,
+    to,
+    subject,
+    text: message,
+    html: branded ? brandedWrapper(message) : message.replace(/\n/g, "<br>"),
+  });
+}
+
 type OrderItem = { name: string; volume: string; price: number; qty?: number };
 
 type OrderEmailData = {
