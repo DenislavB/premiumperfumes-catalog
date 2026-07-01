@@ -25,8 +25,8 @@ export async function POST(req: NextRequest) {
   let discount = 0;
   const usedSources = new Set<string>();
 
-  // De-duplicate, cap at 2
-  const unique = [...new Set(rawCodes.map(c => String(c).trim().toUpperCase()).filter(Boolean))].slice(0, 2);
+  // De-duplicate, cap at 1 (one promo code per order)
+  const unique = [...new Set(rawCodes.map(c => String(c).trim().toUpperCase()).filter(Boolean))].slice(0, 1);
 
   // A "full-size" purchase = any item that isn't a decant ("Отливка")
   const hasFullSize = (items as { volume?: string }[]).some(it => it.volume !== "Отливка");

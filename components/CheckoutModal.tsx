@@ -161,7 +161,7 @@ export default function CheckoutModal({ onClose }: { onClose: () => void }) {
                   </div>
                 ))}
 
-                {applied.length < 2 && (
+                {applied.length < 1 && (
                   <>
                     <div className="flex gap-2">
                       <input
