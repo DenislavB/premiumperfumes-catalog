@@ -9,6 +9,7 @@ type Product = {
   name: string;
   nameBg: string;
   brand: string;
+  category: string;
   volume: string;
   gender: string;
   price: number;
@@ -27,7 +28,7 @@ type Product = {
 };
 
 const empty = {
-  name: "", nameBg: "", brand: "", volume: "", gender: "Unisex",
+  name: "", nameBg: "", brand: "", category: "arabian", volume: "", gender: "Unisex",
   price: "", originalPrice: "", quantity: "0",
   description: "", descriptionBg: "", notes: "", notesBg: "",
   images: [] as string[],
@@ -48,6 +49,7 @@ export default function ProductFormModal({
     product
       ? {
           name: product.name, nameBg: product.nameBg, brand: product.brand,
+          category: product.category || "arabian",
           volume: product.volume, gender: product.gender,
           price: String(product.price), originalPrice: String(product.originalPrice ?? ""),
           quantity: String(product.quantity),
@@ -205,6 +207,14 @@ export default function ProductFormModal({
             <div>
               <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Производител *</label>
               <input required value={form.brand} onChange={e => f("brand", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none" placeholder="напр. Lattafa" />
+            </div>
+            <div>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Категория *</label>
+              <select required value={form.category} onChange={e => f("category", e.target.value)} className="w-full px-3 py-2 text-sm rounded-none">
+                <option value="arabian">Арабски парфюми</option>
+                <option value="designer">Дизайнерски парфюми - отливки</option>
+                <option value="niche">Нишови парфюми - отливки</option>
+              </select>
             </div>
             {!hasVariants && (
               <div>

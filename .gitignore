@@ -55,3 +55,5 @@ check-tester.mjs
 migrate-blob.mjs
 debug-blob.mjs
 fix-freebies.mjs
+categorize-products.mjs
+check-brands.mjs

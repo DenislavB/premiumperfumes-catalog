@@ -5,30 +5,19 @@ import { useState } from "react";
 import ProductCard from "@/components/ProductCard";
 import ContactForm from "@/components/ContactForm";
 import PromoSection from "@/components/PromoSection";
-import SpinWheelOverlay from "@/components/SpinWheelOverlay";
 import type { Product } from "@/lib/types";
 
-const FILTERS = ["decants", "all", "Men", "Women", "Unisex", "featured", "promotions"] as const;
+const FILTERS = ["designer", "niche", "arabian"] as const;
 type Filter = typeof FILTERS[number];
 
 export default function CatalogClient({ products, locale }: { products: Product[]; locale: string }) {
   const t = useTranslations();
-  const [filter, setFilter] = useState<Filter>("decants");
+  const [filter, setFilter] = useState<Filter>("arabian");
 
-  const decantMode = filter === "decants";
-
-  const filtered = products.filter(p => {
-    if (filter === "decants") return p.variants?.some(v => v.size === "Отливка");
-    if (filter === "all") return true;
-    if (filter === "featured") return p.featured;
-    if (filter === "promotions") return p.inPromotion;
-    return p.gender === filter;
-  });
+  const filtered = products.filter(p => p.category === filter);
 
   return (
     <>
-      <SpinWheelOverlay />
-
       {/* Hero */}
       <section className="relative h-[88vh] md:h-[85vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#0D0B08] via-[#1A1410] to-[#0D0B08]" />
@@ -95,39 +84,20 @@ export default function CatalogClient({ products, locale }: { products: Product[
                 className={`flex-shrink-0 text-xs tracking-widest uppercase px-5 py-2 border transition-all duration-300 ${
                   filter === f
                     ? "bg-[#C9A84C] text-[#0D0B08] border-[#C9A84C]"
-                    : f === "decants"
-                    ? "border-[#C9A84C]/60 text-[#C9A84C] hover:bg-[#C9A84C]/10"
                     : "border-[#2A2418] text-[#F5ECD7]/50 hover:border-[#C9A84C]/40 hover:text-[#C9A84C]"
                 }`}
               >
-                {f === "decants" ? `★ ${t("catalog.decants")}`
-                  : f === "all" ? t("catalog.all")
-                  : f === "Men" ? t("catalog.men")
-                  : f === "Women" ? t("catalog.women")
-                  : f === "Unisex" ? t("catalog.unisex")
-                  : f === "featured" ? t("catalog.featured")
-                  : t("catalog.promotions")}
+                {t(`catalog.${f}`)}
               </button>
             ))}
           </div>
-
-          {/* Decant promo note */}
-          {decantMode && (
-            <div className="text-center -mt-6 mb-10">
-              <p className="text-[#C9A84C]/80 text-sm tracking-wide">
-                {locale === "bg"
-                  ? "✦ Опитай преди да купиш — всеки аромат като достъпна отливка"
-                  : "✦ Try before you buy — every fragrance as an affordable decant"}
-              </p>
-            </div>
-          )}
 
           {filtered.length === 0 ? (
             <p className="text-center text-[#F5ECD7]/30 py-20">{t("catalog.noProducts")}</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {filtered.map(p => (
-                <ProductCard key={p.id} product={p} decantMode={decantMode} />
+                <ProductCard key={p.id} product={p} />
               ))}
             </div>
           )}

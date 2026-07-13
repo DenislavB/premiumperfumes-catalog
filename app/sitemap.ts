@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 const BASE = "https://premiumperfumes.bg";
 const LOCALES = ["bg", "en"];
-const STATIC = ["", "/privacy", "/cookies", "/terms", "/returns", "/spin"];
+const STATIC = ["", "/privacy", "/cookies", "/terms", "/returns"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let products: { slug: string; updatedAt: Date }[] = [];

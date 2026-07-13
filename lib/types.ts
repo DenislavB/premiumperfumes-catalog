@@ -11,6 +11,7 @@ export type Product = {
   description: string;
   descriptionBg: string;
   brand: string;
+  category: string;
   volume: string;
   gender: string;
   price: number;

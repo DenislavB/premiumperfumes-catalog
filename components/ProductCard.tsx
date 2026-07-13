@@ -7,7 +7,7 @@ import { formatPrice, TESTER_SIZE } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
 import type { Product } from "@/lib/types";
 
-export default function ProductCard({ product, decantMode = false }: { product: Product; decantMode?: boolean }) {
+export default function ProductCard({ product }: { product: Product }) {
   const t = useTranslations("catalog");
   const tc = useTranslations("cart");
   const locale = useLocale();
@@ -23,14 +23,9 @@ export default function ProductCard({ product, decantMode = false }: { product: 
     ? Math.min(...fullSizeVariants.map(v => v.price))
     : product.price;
 
-  const decantVariant = product.variants?.find(v => v.size === TESTER_SIZE);
-
   const addToCart = () => {
     if (isOutOfStock) return;
-    // In decant mode add the decant; otherwise the first full-size variant
-    const chosen = decantMode && decantVariant
-      ? decantVariant
-      : fullSizeVariants[0] || product.variants?.[0];
+    const chosen = fullSizeVariants[0] || product.variants?.[0];
     add({
       productId: product.id,
       name: product.name,
@@ -102,11 +97,7 @@ export default function ProductCard({ product, decantMode = false }: { product: 
         )}
 
         <div className="flex items-baseline gap-2 mb-4">
-          {decantMode && decantVariant ? (
-            <span className="text-[#C9A84C] text-lg font-semibold">
-              {TESTER_SIZE} — {formatPrice(decantVariant.price)}
-            </span>
-          ) : hasVariants ? (
+          {hasVariants ? (
             <span className="text-[#C9A84C] text-lg font-semibold">
               {locale === "bg" ? "от " : "from "}{formatPrice(minVariantPrice)}
             </span>
@@ -125,7 +116,7 @@ export default function ProductCard({ product, decantMode = false }: { product: 
           disabled={isOutOfStock}
           className="w-full text-xs tracking-widest uppercase py-2.5 border transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed border-[#C9A84C]/50 text-[#C9A84C] hover:bg-[#C9A84C] hover:text-[#0D0B08]"
         >
-          {decantMode ? (locale === "bg" ? "Добави отливка" : "Add decant") : tc("addToCart")}
+          {tc("addToCart")}
         </button>
       </div>
     </div>

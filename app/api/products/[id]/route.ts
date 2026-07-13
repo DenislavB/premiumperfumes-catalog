@@ -23,6 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.description !== undefined) data.description = body.description;
   if (body.descriptionBg !== undefined) data.descriptionBg = body.descriptionBg;
   if (body.brand !== undefined) data.brand = body.brand;
+  if (body.category !== undefined) data.category = body.category;
   if (body.volume !== undefined) data.volume = body.volume;
   if (body.gender !== undefined) data.gender = body.gender;
   if (body.price !== undefined) data.price = parseFloat(body.price);

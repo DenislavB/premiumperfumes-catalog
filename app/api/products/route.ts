@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
       description: body.description || "",
       descriptionBg: body.descriptionBg || "",
       brand: body.brand,
+      category: body.category || "arabian",
       volume: body.volume,
       gender: body.gender,
       price: parseFloat(body.price),

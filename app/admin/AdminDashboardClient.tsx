@@ -22,6 +22,13 @@ function dateTime(d: string) {
   });
 }
 
+// Short category label + color for the admin product list
+function categoryTag(category: string) {
+  if (category === "designer") return { label: "Дизайнерски", className: "text-[#E8D5A3] border-[#E8D5A3]/30" };
+  if (category === "niche") return { label: "Нишови", className: "text-[#9A7A2E] border-[#9A7A2E]/40" };
+  return { label: "Арабски", className: "text-[#C9A84C] border-[#C9A84C]/30" };
+}
+
 // Variant price summary, sorted low→high. Returns { prices, sizes }
 function priceSummary(product: { price: number; variants?: { size: string; price: number }[] }) {
   const v = product.variants;
@@ -41,6 +48,7 @@ type Product = {
   name: string;
   nameBg: string;
   brand: string;
+  category: string;
   volume: string;
   gender: string;
   price: number;
@@ -423,7 +431,12 @@ export default function AdminDashboardClient({
                   <div className="flex-1 min-w-0">
                     <p className="text-[#F5ECD7] text-sm truncate">{product.name}</p>
                     <p className="text-[#C9A84C] text-xs">{priceSummary(product).prices}<span className="text-[#F5ECD7]/30"> · {priceSummary(product).sizes}</span></p>
-                    <p className="text-[#F5ECD7]/30 text-xs">{product.brand}</p>
+                    <p className="text-[#F5ECD7]/30 text-xs flex items-center gap-1.5">
+                      {product.brand}
+                      <span className={`border px-1 py-px text-[10px] ${categoryTag(product.category).className}`}>
+                        {categoryTag(product.category).label}
+                      </span>
+                    </p>
                   </div>
                   <div className="flex flex-col gap-2 items-end">
                     <button
@@ -485,7 +498,14 @@ export default function AdminDashboardClient({
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-[#F5ECD7]/60 text-sm">{product.brand}</td>
+                      <td className="px-4 py-3 text-[#F5ECD7]/60 text-sm">
+                        <div className="flex items-center gap-1.5">
+                          {product.brand}
+                          <span className={`border px-1 py-px text-[10px] ${categoryTag(product.category).className}`}>
+                            {categoryTag(product.category).label}
+                          </span>
+                        </div>
+                      </td>
                       <td className="px-4 py-3">
                         {(() => {
                           const s = priceSummary(product);
