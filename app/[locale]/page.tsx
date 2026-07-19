@@ -7,10 +7,18 @@ const BASE = "https://premiumperfumes.bg";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
+  const bg = locale === "bg";
   return {
+    title: bg
+      ? "Арабски, дизайнерски и нишови парфюми и отливки"
+      : "Arabian, designer and niche perfumes & decants",
     alternates: {
       canonical: `${BASE}/${locale}`,
-      languages: { bg: `${BASE}/bg`, en: `${BASE}/en` },
+      languages: {
+        bg: `${BASE}/bg`,
+        en: `${BASE}/en`,
+        "x-default": `${BASE}/bg`,
+      },
     },
   };
 }

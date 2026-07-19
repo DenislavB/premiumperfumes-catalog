@@ -15,10 +15,15 @@ export async function generateMetadata({
   if (!product) return { title: "Продукт" };
 
   const bg = locale === "bg";
-  const title = `${product.name} — ${product.brand}`;
+  // Localized title so the BG and EN pages aren't seen as duplicates by Google
+  const title = bg
+    ? `${product.name} — ${product.brand} | Парфюм и отливки`
+    : `${product.name} — ${product.brand} | Perfume & decants`;
   const desc =
     (bg ? product.descriptionBg : product.description)?.slice(0, 160) ||
-    `${product.name} от ${product.brand}. Оригинален парфюм. Доставка в цяла България.`;
+    (bg
+      ? `${product.name} от ${product.brand}. Оригинален парфюм и отливки. Доставка в цяла България.`
+      : `${product.name} by ${product.brand}. Original perfume and decants. Delivery across Bulgaria.`);
   const url = `${BASE}/${locale}/product/${slug}`;
 
   return {
@@ -29,6 +34,7 @@ export async function generateMetadata({
       languages: {
         bg: `${BASE}/bg/product/${slug}`,
         en: `${BASE}/en/product/${slug}`,
+        "x-default": `${BASE}/bg/product/${slug}`,
       },
     },
     openGraph: {

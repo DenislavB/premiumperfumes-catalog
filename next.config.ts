@@ -16,12 +16,20 @@ const nextConfig: NextConfig = {
   async redirects() {
     // Old e-commerce platform's URL structure (pre-migration) — send stale
     // crawled/bookmarked links to the new homepage instead of 404ing.
-    const oldPlatformPaths = ["product", "vendor", "category", "selection", "auth"];
-    return oldPlatformPaths.map((path) => ({
-      source: `/${path}/:rest*`,
-      destination: "/bg",
-      permanent: true,
-    }));
+    const oldPrefixes = ["product", "vendor", "category", "selection", "auth", "page", "blog"];
+    const oldExact = ["/vendors", "/contacts", "/blog"];
+    return [
+      ...oldPrefixes.map((path) => ({
+        source: `/${path}/:rest*`,
+        destination: "/bg",
+        permanent: true,
+      })),
+      ...oldExact.map((source) => ({
+        source,
+        destination: "/bg",
+        permanent: true,
+      })),
+    ];
   },
 };
 
