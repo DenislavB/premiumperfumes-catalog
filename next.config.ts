@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
     // Old e-commerce platform's URL structure (pre-migration) — send stale
     // crawled/bookmarked links to the new homepage instead of 404ing.
     const oldPrefixes = ["product", "vendor", "category", "selection", "auth", "page", "blog"];
-    const oldExact = ["/vendors", "/contacts", "/blog"];
+    const oldExact = ["/vendors", "/contacts", "/blog", "/cdn-cgi/l/email-protection"];
     return [
       ...oldPrefixes.map((path) => ({
         source: `/${path}/:rest*`,

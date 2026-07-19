@@ -16,8 +16,13 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Apply i18n middleware for non-admin routes
-  if (!pathname.startsWith("/admin") && !pathname.startsWith("/api")) {
+  // Apply i18n middleware for non-admin routes (and skip Next.js metadata routes like opengraph-image,
+  // which live outside [locale] and must not get a locale prefix added)
+  if (
+    !pathname.startsWith("/admin") &&
+    !pathname.startsWith("/api") &&
+    !pathname.startsWith("/opengraph-image")
+  ) {
     return intlMiddleware(request);
   }
 
@@ -25,5 +30,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|_vercel|.*\\..*).*)"],
+  matcher: ["/((?!_next|_vercel|opengraph-image|.*\\..*).*)"],
 };
