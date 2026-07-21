@@ -5,9 +5,19 @@
     "contact": "Contact"
   },
   "hero": {
-    "tagline": "Luxury Fragrances from Dubai",
-    "subtitle": "Discover the art of Arabian perfumery — rare oud, precious musks, and timeless elegance.",
+    "tagline": "Find your next signature scent",
+    "subtitle": "The place to discover your next favorite fragrance — first as an affordable decant. Love it, and we deduct the decant's price from the full bottle.",
     "cta": "Explore Collection"
+  },
+  "sections": {
+    "bestsellers": "Best Sellers",
+    "newArrivals": "New Arrivals"
+  },
+  "trust": {
+    "originalTitle": "100% Original Fragrances",
+    "originalText": "All our fragrances are 100% authentic, with guaranteed origin from proven brands.",
+    "deliveryTitle": "Delivery in 1 to 3 business days",
+    "deliveryText": "Fast and secure delivery to anywhere in the country."
   },
   "cart": {
     "title": "Cart",

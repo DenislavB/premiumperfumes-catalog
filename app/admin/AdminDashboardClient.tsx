@@ -207,9 +207,9 @@ export default function AdminDashboardClient({
   const featuredCount = products.filter(p => p.featured).length;
 
   const toggleFeatured = async (product: Product) => {
-    // Limit: max 3 highlighted perfumes
-    if (!product.featured && featuredCount >= 3) {
-      alert("Можете да изберете максимум 3 акцентирани парфюма. Премахнете един, за да добавите нов.");
+    // Limit: max 12 best-sellers (shown in the "Най-продавани" row)
+    if (!product.featured && featuredCount >= 12) {
+      alert("Можете да изберете максимум 12 „Най-продавани“ парфюма. Премахнете един, за да добавите нов.");
       return;
     }
     const res = await fetch(`/api/products/${product.id}`, {
@@ -405,7 +405,7 @@ export default function AdminDashboardClient({
                 <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Продукти</h1>
                 <p className="text-[#F5ECD7]/30 text-sm mt-1">
                   {products.length} продукта в каталога
-                  <span className="ml-3 text-[#C9A84C]/70">★ акценти: {featuredCount}/3</span>
+                  <span className="ml-3 text-[#C9A84C]/70">★ Най-продавани: {featuredCount}/12</span>
                 </p>
               </div>
               <button
@@ -448,7 +448,7 @@ export default function AdminDashboardClient({
                     <div className="flex gap-2">
                       <button
                         onClick={() => toggleFeatured(product)}
-                        title={product.featured ? "Премахни от акценти" : "Добави в акценти"}
+                        title={product.featured ? "Премахни от „Най-продавани“" : "Добави в „Най-продавани“"}
                         className={product.featured ? "text-[#C9A84C]" : "text-[#F5ECD7]/40 hover:text-[#C9A84C]"}
                       >
                         <Star size={14} fill={product.featured ? "#C9A84C" : "none"} />
@@ -533,7 +533,7 @@ export default function AdminDashboardClient({
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => toggleFeatured(product)}
-                            title={product.featured ? "Премахни от акценти" : "Добави в акценти"}
+                            title={product.featured ? "Премахни от „Най-продавани“" : "Добави в „Най-продавани“"}
                             className={`transition-colors p-1 ${product.featured ? "text-[#C9A84C]" : "text-[#F5ECD7]/40 hover:text-[#C9A84C]"}`}
                           >
                             <Star size={14} fill={product.featured ? "#C9A84C" : "none"} />

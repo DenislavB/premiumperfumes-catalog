@@ -22,6 +22,10 @@ body {
 
 ::selection { background: rgba(201, 168, 76, 0.3); color: #F5ECD7; }
 
+/* Hide scrollbars on horizontal scroll rows */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
 .text-gradient-gold {
   background: linear-gradient(135deg, #C9A84C 0%, #E8D5A3 50%, #C9A84C 100%);
   -webkit-background-clip: text;

@@ -57,3 +57,7 @@ debug-blob.mjs
 fix-freebies.mjs
 categorize-products.mjs
 check-brands.mjs
+check-images.mjs
+migrate-blob2.mjs
+check-remaining.mjs
+fix-remaining-images.mjs

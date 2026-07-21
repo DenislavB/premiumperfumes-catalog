@@ -1,20 +1,48 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { BadgeCheck, Truck } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import ContactForm from "@/components/ContactForm";
-import PromoSection from "@/components/PromoSection";
+import ProductRow from "@/components/ProductRow";
 import type { Product } from "@/lib/types";
 
 const FILTERS = ["designer", "niche", "arabian"] as const;
 type Filter = typeof FILTERS[number];
+const FILTER_KEY = "pp_catalog_filter";
 
 export default function CatalogClient({ products, locale }: { products: Product[]; locale: string }) {
   const t = useTranslations();
   const [filter, setFilter] = useState<Filter>("arabian");
 
+  // Restore the last-viewed category so returning from a product lands in the same section
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(FILTER_KEY);
+      if (saved && (FILTERS as readonly string[]).includes(saved)) setFilter(saved as Filter);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const changeFilter = (f: Filter) => {
+    setFilter(f);
+    try {
+      sessionStorage.setItem(FILTER_KEY, f);
+    } catch {
+      /* ignore */
+    }
+  };
+
   const filtered = products.filter(p => p.category === filter);
+
+  // Best sellers (admin-flagged via ★) and newest arrivals
+  const bestsellers = products.filter(p => p.featured && p.available).slice(0, 12);
+  const newArrivals = [...products]
+    .filter(p => p.available)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 12);
 
   return (
     <>
@@ -55,8 +83,9 @@ export default function CatalogClient({ products, locale }: { products: Product[
         </div>
       </section>
 
-      {/* Promo / Featured */}
-      <PromoSection products={products} />
+      {/* Best sellers + New arrivals — first thing after the hero */}
+      <ProductRow title={t("sections.bestsellers")} products={bestsellers} />
+      <ProductRow title={t("sections.newArrivals")} products={newArrivals} />
 
       {/* Catalog */}
       <section id="catalog" className="py-24 px-6">
@@ -80,7 +109,7 @@ export default function CatalogClient({ products, locale }: { products: Product[
             {FILTERS.map(f => (
               <button
                 key={f}
-                onClick={() => setFilter(f)}
+                onClick={() => changeFilter(f)}
                 className={`flex-shrink-0 text-xs tracking-widest uppercase px-5 py-2 border transition-all duration-300 ${
                   filter === f
                     ? "bg-[#C9A84C] text-[#0D0B08] border-[#C9A84C]"
@@ -131,6 +160,26 @@ export default function CatalogClient({ products, locale }: { products: Product[
           >
             📍 Omaya · гр. Кюстендил, бул. „Цар Освободител" 91
           </a>
+        </div>
+      </section>
+
+      {/* Trust badges */}
+      <section className="py-16 px-6 border-t border-[#2A2418]">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-10 text-center">
+          <div className="flex flex-col items-center">
+            <BadgeCheck size={40} className="text-[#C9A84C] mb-4" strokeWidth={1.5} />
+            <h3 className="text-[#F5ECD7] text-lg mb-2" style={{ fontFamily: "var(--font-playfair)" }}>
+              {t("trust.originalTitle")}
+            </h3>
+            <p className="text-[#F5ECD7]/50 text-sm max-w-xs leading-relaxed">{t("trust.originalText")}</p>
+          </div>
+          <div className="flex flex-col items-center">
+            <Truck size={40} className="text-[#C9A84C] mb-4" strokeWidth={1.5} />
+            <h3 className="text-[#F5ECD7] text-lg mb-2" style={{ fontFamily: "var(--font-playfair)" }}>
+              {t("trust.deliveryTitle")}
+            </h3>
+            <p className="text-[#F5ECD7]/50 text-sm max-w-xs leading-relaxed">{t("trust.deliveryText")}</p>
+          </div>
         </div>
       </section>
 

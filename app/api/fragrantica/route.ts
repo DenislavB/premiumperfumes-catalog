@@ -69,34 +69,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "xAI API key not configured" }, { status: 500 });
   }
 
-  const prompt = `You are a luxury perfume copywriter creating product descriptions for a high-end Bulgarian perfume catalog.
+  const prompt = `You are an expert perfume copywriter AND SEO specialist writing product descriptions for a Bulgarian luxury & niche perfume DECANT shop (customers try affordable decants before buying full bottles).
 
-For the perfume "${name}" by "${brand}", write the following. Be specific about this perfume's actual character — don't be generic.
+For the perfume "${name}" by "${brand}", be specific about THIS fragrance — never generic filler.
 
----
+Write a SHORT, direct, SEO-optimized description (STRICT max 65 words) that reads as smooth, natural prose (NOT a bulleted list, and DO NOT write the questions themselves). Woven naturally, it must answer:
+1. За кого е (who it's for — gender & personality/vibe)
+2. Кога се носи (when — season, day/night, occasion)
+3. На какво прилича (scent family + smell; if it's a well-known clone/inspired-by a designer scent, say which, as people search for that)
+4. Защо си заслужава (what makes it worth the money — performance, longevity, sillage, uniqueness)
 
-ENGLISH DESCRIPTION:
-Write a compelling, elegant product description in English. Structure it like a luxury brand would:
-- First sentence: a captivating opening that captures the soul of the scent
-- Second sentence: describe the fragrance journey (top notes feel, heart, base)
-- Third sentence: the mood, occasion, or person this perfume is made for
-Keep it under 80 words. No bullet points. Flowing, poetic prose.
+SEO rules: naturally include the brand name and 1-2 real search terms buyers use (e.g. "нишов парфюм", "дълготраен", "офис аромат", "вечерен парфюм", scent family). First sentence must be a strong, keyword-rich hook. Be concrete and confident, no clichés ("captivating journey", "olfactory symphony" = banned).
 
-BULGARIAN DESCRIPTION:
-Translate and adapt the above into elegant Bulgarian. Same structure, same feel. Natural Bulgarian — not a robotic translation. Under 80 words.
-
-NOTES IN ENGLISH:
-List the key fragrance notes separated by commas. Only the notes, nothing else. Example: Bulgarian rose, oud, amber, white musk, sandalwood
-
-NOTES IN BULGARIAN:
-Same notes translated to Bulgarian, separated by commas. Example: Българска роза, уд, амбра, бял мускус, сандалово дърво
-
+ENGLISH DESCRIPTION: the above, in natural English (max 65 words).
+BULGARIAN DESCRIPTION: the same adapted into natural, fluent Bulgarian — not a literal translation (max 65 words).
+NOTES IN ENGLISH: key notes, comma-separated only. Example: bergamot, oud, amber, white musk, sandalwood
+NOTES IN BULGARIAN: same in Bulgarian, comma-separated only.
 GENDER: Men | Women | Unisex (pick one)
-
-OFFICIAL PRODUCT URL:
-Find the exact URL of this perfume on the official brand website or on fragrantica.com or parfumo.com. Return only the full URL, nothing else. If you don't know the exact URL, return an empty string "".
-
----
+OFFICIAL PRODUCT URL: the exact URL on the official brand site or fragrantica.com / parfumo.com, or "" if unknown.
 
 Respond ONLY with valid JSON, no markdown, no explanation:
 {
