@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { X, Plus, Minus, Search } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, Plus, Minus, Search, Upload } from "lucide-react";
+import { upload } from "@vercel/blob/client";
 
 type Product = {
   id: string;
@@ -127,6 +128,31 @@ export default function ProductFormModal({
       f("images", [...(form.images as string[]), imgUrl.trim()]);
       setImgUrl("");
     }
+  };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    setUploadError("");
+    try {
+      const urls: string[] = [];
+      for (const file of Array.from(files)) {
+        const blob = await upload(`products/${file.name}`, file, {
+          access: "public",
+          handleUploadUrl: "/api/upload",
+        });
+        urls.push(blob.url);
+      }
+      f("images", [...(form.images as string[]), ...urls]);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Грешка при качване");
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const toggleSuggestedImage = (imgSrc: string) => {
@@ -404,9 +430,31 @@ export default function ProductFormModal({
               />
             </div>
 
-            {/* Manual image URL */}
+            {/* Image upload / URL */}
             <div className="col-span-2">
-              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Добави снимка по URL</label>
+              <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Снимки</label>
+
+              {/* Upload from device */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={e => handleFiles(e.target.files)}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-2 w-full justify-center border border-[#C9A84C]/50 text-[#C9A84C] px-3 py-2.5 text-xs tracking-widest uppercase hover:bg-[#C9A84C]/10 transition-colors disabled:opacity-50 mb-2"
+              >
+                <Upload size={15} />
+                {uploading ? "Качване..." : "Качи от устройство"}
+              </button>
+              {uploadError && <p className="text-red-400 text-xs mb-2">{uploadError}</p>}
+
+              <p className="text-[#F5ECD7]/30 text-xs mb-1.5">или добави по URL:</p>
               <div className="flex gap-2 mb-2">
                 <input
                   type="url"
