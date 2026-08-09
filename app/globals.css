@@ -72,6 +72,136 @@ body {
   .promo-pulse, .promo-glow, .promo-shimmer { animation: none; }
 }
 
+/* ===== Scent Journey (quiz) animations ===== */
+
+/* Scene / step entrance */
+@keyframes qaEnter {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.qa-enter { animation: qaEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes qaSlideIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.qa-slide { animation: qaSlideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Soft breathing glow */
+@keyframes qaBreathe {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 0.95; transform: scale(1.1); }
+}
+.qa-breathe { animation: qaBreathe 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+
+/* Bottle cap lifting off */
+@keyframes qaCap {
+  0%, 12%  { transform: translateY(0) rotate(0deg); }
+  40%, 78% { transform: translateY(-16px) rotate(-7deg); }
+  100%     { transform: translateY(0) rotate(0deg); }
+}
+.qa-cap { animation: qaCap 5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+
+/* Golden dust drifting up out of the bottle */
+@keyframes qaParticle {
+  0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+  15%  { opacity: 0.9; }
+  70%  { opacity: 0.7; }
+  100% { opacity: 0; transform: translateY(-72px) scale(1.15); }
+}
+.qa-particle { animation: qaParticle 4s ease-out infinite; }
+
+/* Orbiting essence orbs */
+@keyframes qaOrbit    { from { transform: rotate(0deg); }   to { transform: rotate(360deg); } }
+@keyframes qaOrbitRev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+.qa-orbit     { animation: qaOrbit 18s linear infinite; }
+.qa-orbit-rev { animation: qaOrbitRev 12s linear infinite; }
+
+@keyframes qaSpinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.qa-spin-slow { animation: qaSpinSlow 40s linear infinite; }
+
+/* Sun -> moon travelling along the arc */
+@keyframes qaArc {
+  0%   { offset-distance: 0%;   opacity: 0.2; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0.2; }
+}
+.qa-arc {
+  offset-path: path("M30 140 A80 80 0 0 1 190 140");
+  animation: qaArc 7s ease-in-out infinite;
+}
+
+@keyframes qaTwinkle {
+  0%, 100% { opacity: 0.1; }
+  50%      { opacity: 0.9; }
+}
+.qa-twinkle { animation: qaTwinkle 3s ease-in-out infinite; }
+
+/* Seasonal drift */
+@keyframes qaFall {
+  0%   { opacity: 0; transform: translateY(0) translateX(0); }
+  20%  { opacity: 0.8; }
+  100% { opacity: 0; transform: translateY(160px) translateX(18px); }
+}
+.qa-fall { animation: qaFall 6s linear infinite; }
+
+/* Expanding aura / ripple rings */
+@keyframes qaRipple {
+  0%   { opacity: 0.55; transform: scale(0.72); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+.qa-ripple { animation: qaRipple 3.8s ease-out infinite; }
+
+/* Sillage rings bursting from the atomiser */
+@keyframes qaSpray {
+  0%   { opacity: 0.75; transform: scale(0.3); }
+  100% { opacity: 0; transform: scale(2.6); }
+}
+.qa-spray { animation: qaSpray 3.6s ease-out infinite; }
+
+@keyframes qaSprayDot {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  15%  { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(var(--dx, 70px), var(--dy, 0px)) scale(1.1); }
+}
+.qa-spray-dot { animation: qaSprayDot 3.2s ease-out infinite; }
+
+/* Ribbons drawing themselves */
+@keyframes qaDraw {
+  0%   { stroke-dashoffset: 260; }
+  55%  { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -260; }
+}
+.qa-draw { stroke-dasharray: 260; animation: qaDraw 6s ease-in-out infinite; }
+
+/* Result cards revealing one after another */
+@keyframes qaReveal {
+  from { opacity: 0; transform: translateY(26px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.qa-reveal { animation: qaReveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Shimmer sweep across the match badge */
+@keyframes qaShine {
+  0%   { background-position: -150% 0; }
+  100% { background-position: 250% 0; }
+}
+.qa-shine {
+  background-image: linear-gradient(110deg, transparent 30%, rgba(232, 213, 163, 0.55) 50%, transparent 70%);
+  background-size: 200% 100%;
+  animation: qaShine 3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qa-enter, .qa-slide, .qa-breathe, .qa-cap, .qa-particle, .qa-orbit, .qa-orbit-rev,
+  .qa-spin-slow, .qa-arc, .qa-twinkle, .qa-fall, .qa-ripple, .qa-spray, .qa-spray-dot,
+  .qa-draw, .qa-reveal, .qa-shine {
+    animation: none;
+  }
+  .qa-draw { stroke-dashoffset: 0; }
+}
+
 /* Admin form inputs — clearly visible against dark background */
 input:not([type="checkbox"]):not([type="radio"]),
 textarea,

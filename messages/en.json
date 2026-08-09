@@ -13,6 +13,102 @@
     "bestsellers": "Best Sellers",
     "newArrivals": "New Arrivals"
   },
+  "quiz": {
+    "launchTitle": "The Scent Journey",
+    "launchSubtitle": "Answer 7 questions and we'll pick 3 decants matched to your taste.",
+    "launchCta": "Begin the journey",
+    "launchMeta": "Takes under a minute",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "skip": "Skip this question",
+    "reveal": "Reveal my scents",
+    "mixing": "Composing your profile...",
+    "steps": {
+      "favorite": {
+        "title": "What's your favourite perfume?",
+        "subtitle": "If you already love a fragrance, we'll look for something in its world.",
+        "placeholder": "e.g. Dior Sauvage, Lattafa Qimmah...",
+        "hint": "Don't have one? No problem — just skip it."
+      },
+      "families": {
+        "title": "Which scents draw you in?",
+        "subtitle": "Pick everything you like. The more you choose, the sharper the match."
+      },
+      "occasion": {
+        "title": "When will you wear it?",
+        "subtitle": "A scent for the office and one for the evening are rarely the same."
+      },
+      "season": {
+        "title": "Which season?",
+        "subtitle": "Warmth changes how a fragrance behaves — season matters."
+      },
+      "vibe": {
+        "title": "What impression do you want to leave?",
+        "subtitle": "Your scent is the first thing people remember about you."
+      },
+      "intensity": {
+        "title": "How strong should the trail be?",
+        "subtitle": "Sillage is how far and how long people notice you."
+      },
+      "target": {
+        "title": "Who is it for?",
+        "subtitle": "Unisex fragrances suit everyone."
+      }
+    },
+    "families": {
+      "citrus": { "label": "Citrus", "hint": "bergamot, lemon, grapefruit" },
+      "floral": { "label": "Floral", "hint": "rose, jasmine, iris" },
+      "gourmand": { "label": "Sweet", "hint": "vanilla, caramel, cocoa" },
+      "fruity": { "label": "Fruity", "hint": "peach, pineapple, raspberry" },
+      "woody": { "label": "Woody", "hint": "oud, sandalwood, cedar" },
+      "spicy": { "label": "Spicy", "hint": "saffron, cinnamon, black pepper" },
+      "fresh": { "label": "Fresh", "hint": "marine notes, mint, tea" },
+      "amber": { "label": "Amber", "hint": "amber, incense, resins" },
+      "leather": { "label": "Leather & tobacco", "hint": "leather, tobacco, rum" },
+      "musk": { "label": "Musky", "hint": "white musk, clean skin" }
+    },
+    "occasions": {
+      "day": { "label": "Everyday", "hint": "easy to wear from morning to night" },
+      "night": { "label": "Evening", "hint": "richer, seductive, memorable" },
+      "work": { "label": "Work", "hint": "discreet and professional" },
+      "special": { "label": "Special occasion", "hint": "something that gets noticed" }
+    },
+    "seasons": {
+      "spring": { "label": "Spring", "hint": "floral and fresh" },
+      "summer": { "label": "Summer", "hint": "citrus and light" },
+      "autumn": { "label": "Autumn", "hint": "woody and warm" },
+      "winter": { "label": "Winter", "hint": "sweet and rich" }
+    },
+    "vibes": {
+      "elegant": { "label": "Elegant", "hint": "refined and classic" },
+      "seductive": { "label": "Seductive", "hint": "warm, magnetic" },
+      "clean": { "label": "Fresh & clean", "hint": "like a freshly pressed shirt" },
+      "bold": { "label": "Bold", "hint": "strong character that won't go unnoticed" },
+      "cozy": { "label": "Cosy", "hint": "soft, warm, comforting" }
+    },
+    "intensities": {
+      "subtle": { "label": "Subtle", "hint": "noticed only up close" },
+      "balanced": { "label": "Balanced", "hint": "just the right amount" },
+      "strong": { "label": "Strong", "hint": "you enter the room before you do" }
+    },
+    "targets": {
+      "women": "For her",
+      "men": "For him",
+      "unisex": "Unisex"
+    },
+    "results": {
+      "title": "Your three scents",
+      "subtitle": "Chosen from our collection based on your answers. Try them as decants before you commit.",
+      "match": "match",
+      "because": "Because of:",
+      "decant": "decant price",
+      "added": "Added ✓",
+      "again": "Try again",
+      "browse": "Browse the full catalogue",
+      "empty": "We couldn't find a match. Try different answers."
+    }
+  },
   "trust": {
     "originalTitle": "100% Original Fragrances",
     "originalText": "All our fragrances are 100% authentic, with guaranteed origin from proven brands.",

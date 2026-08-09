@@ -2,19 +2,36 @@
 
 import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
-import { BadgeCheck, Truck } from "lucide-react";
+import { BadgeCheck, Truck, Sparkles } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import ContactForm from "@/components/ContactForm";
 import ProductRow from "@/components/ProductRow";
+import ScentJourney from "@/components/quiz/ScentJourney";
 import type { Product } from "@/lib/types";
 
 const FILTERS = ["designer", "niche", "arabian"] as const;
 type Filter = typeof FILTERS[number];
 const FILTER_KEY = "pp_catalog_filter";
+const QUIZ_SEEN_KEY = "pp_quiz_seen";
 
 export default function CatalogClient({ products, locale }: { products: Product[]; locale: string }) {
   const t = useTranslations();
   const [filter, setFilter] = useState<Filter>("arabian");
+  const [quizOpen, setQuizOpen] = useState(false);
+
+  // Greet first-time visitors with the scent journey (once per session)
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(QUIZ_SEEN_KEY)) return;
+      const timer = setTimeout(() => {
+        sessionStorage.setItem(QUIZ_SEEN_KEY, "1");
+        setQuizOpen(true);
+      }, 1600);
+      return () => clearTimeout(timer);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   // Restore the last-viewed category so returning from a product lands in the same section
   useEffect(() => {
@@ -73,13 +90,50 @@ export default function CatalogClient({ products, locale }: { products: Product[
           <p className="text-[#F5ECD7]/60 text-base md:text-xl max-w-2xl mx-auto leading-relaxed mb-10 px-2">
             {t("hero.subtitle")}
           </p>
-          <a
-            href="#catalog"
-            className="inline-flex items-center gap-3 border border-[#C9A84C]/50 text-[#C9A84C] px-6 py-3 text-xs tracking-widest uppercase hover:bg-[#C9A84C]/10 transition-all duration-300"
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              onClick={() => setQuizOpen(true)}
+              className="inline-flex items-center gap-2.5 bg-[#C9A84C] text-[#0D0B08] px-6 py-3 text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-all duration-300"
+            >
+              <Sparkles size={15} />
+              {t("quiz.launchCta")}
+            </button>
+            <a
+              href="#catalog"
+              className="inline-flex items-center gap-3 border border-[#C9A84C]/50 text-[#C9A84C] px-6 py-3 text-xs tracking-widest uppercase hover:bg-[#C9A84C]/10 transition-all duration-300"
+            >
+              {t("hero.cta")}
+              <span className="text-lg">↓</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Scent journey invitation */}
+      <section className="py-14 px-6 border-b border-[#2A2418] bg-gradient-to-b from-[#12100C] to-[#0D0B08]">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-3 mb-5">
+            <div className="h-px w-10 bg-[#C9A84C]/40" />
+            <Sparkles size={16} className="text-[#C9A84C]" />
+            <div className="h-px w-10 bg-[#C9A84C]/40" />
+          </div>
+          <h2
+            className="text-2xl md:text-4xl text-gradient-gold mb-4"
+            style={{ fontFamily: "var(--font-playfair)" }}
           >
-            {t("hero.cta")}
-            <span className="text-lg">↓</span>
-          </a>
+            {t("quiz.launchTitle")}
+          </h2>
+          <p className="text-[#F5ECD7]/50 text-sm md:text-base leading-relaxed max-w-xl mx-auto mb-7">
+            {t("quiz.launchSubtitle")}
+          </p>
+          <button
+            onClick={() => setQuizOpen(true)}
+            className="inline-flex items-center gap-2.5 bg-[#C9A84C] text-[#0D0B08] px-7 py-3.5 text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-all duration-300"
+          >
+            <Sparkles size={15} />
+            {t("quiz.launchCta")}
+          </button>
+          <p className="text-[#F5ECD7]/25 text-xs mt-4 tracking-wider">{t("quiz.launchMeta")}</p>
         </div>
       </section>
 
@@ -209,6 +263,8 @@ export default function CatalogClient({ products, locale }: { products: Product[
           <ContactForm />
         </div>
       </section>
+
+      <ScentJourney products={products} open={quizOpen} onClose={() => setQuizOpen(false)} />
     </>
   );
 }
