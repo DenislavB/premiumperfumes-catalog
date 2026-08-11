@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
     const valid =
       promo &&
       promo.active &&
+      (!promo.startsAt || new Date(promo.startsAt) <= new Date()) &&
       (!promo.expiresAt || new Date(promo.expiresAt) >= new Date()) &&
       (promo.usageLimit === null || promo.usageCount < promo.usageLimit) &&
       (promo.minOrder === null || orderTotal >= promo.minOrder) &&

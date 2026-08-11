@@ -15,6 +15,9 @@ export async function POST(req: NextRequest) {
   if (!promo || !promo.active) {
     return NextResponse.json({ valid: false, error: "Невалиден промокод" });
   }
+  if (promo.startsAt && new Date(promo.startsAt) > new Date()) {
+    return NextResponse.json({ valid: false, error: "Промокодът още не е активен" });
+  }
   if (promo.expiresAt && new Date(promo.expiresAt) < new Date()) {
     return NextResponse.json({ valid: false, error: "Промокодът е изтекъл" });
   }

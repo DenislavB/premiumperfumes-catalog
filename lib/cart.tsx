@@ -22,6 +22,9 @@ type CartContextType = {
   count: number;
   total: number;
   add: (item: Omit<CartItem, "qty">, qty?: number) => void;
+  /** Adds several items at once without popping the cart drawer open. Items
+   *  already in the cart at the same size are left alone rather than stacked. */
+  addMany: (items: Omit<CartItem, "qty">[]) => void;
   remove: (productId: string, size: string) => void;
   setQty: (productId: string, size: string, qty: number) => void;
   setSize: (productId: string, oldSize: string, newSize: string, newPrice: number) => void;
@@ -72,6 +75,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setOpen(true);
   }, []);
 
+  const addMany: CartContextType["addMany"] = useCallback(incoming => {
+    setItems(prev => {
+      const next = [...prev];
+      for (const item of incoming) {
+        const exists = next.some(i => i.productId === item.productId && i.size === item.size);
+        if (!exists) next.push({ ...item, qty: 1 });
+      }
+      return next;
+    });
+  }, []);
+
   const remove: CartContextType["remove"] = useCallback((productId, size) => {
     setItems(prev => prev.filter(i => !(i.productId === productId && i.size === size)));
   }, []);
@@ -107,7 +121,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const total = Math.round(items.reduce((s, i) => s + i.price * i.qty, 0) * 100) / 100;
 
   return (
-    <CartContext.Provider value={{ items, count, total, add, remove, setQty, setSize, clear, open, setOpen }}>
+    <CartContext.Provider value={{ items, count, total, add, addMany, remove, setQty, setSize, clear, open, setOpen }}>
       {children}
     </CartContext.Provider>
   );

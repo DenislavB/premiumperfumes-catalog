@@ -259,7 +259,7 @@ export default function AdminDashboardClient({
       ).slice(0, 8),
     };
   }, [quiz]);
-  const [newPromo, setNewPromo] = useState({ code: "", discountType: "percent", discountValue: "", minOrder: "", expiresAt: "", usageLimit: "" });
+  const [newPromo, setNewPromo] = useState({ code: "", discountType: "percent", discountValue: "", minOrder: "", startsAt: "", expiresAt: "", usageLimit: "", source: "standard" });
   const [promoError, setPromoError] = useState("");
   const [showArchived, setShowArchived] = useState(false);
 
@@ -397,7 +397,7 @@ export default function AdminDashboardClient({
     if (res.ok) {
       const created = await res.json();
       setPromos(ps => [created, ...ps]);
-      setNewPromo({ code: "", discountType: "percent", discountValue: "", minOrder: "", expiresAt: "", usageLimit: "" });
+      setNewPromo({ code: "", discountType: "percent", discountValue: "", minOrder: "", startsAt: "", expiresAt: "", usageLimit: "", source: "standard" });
     } else {
       const err = await res.json();
       setPromoError(err.error || "Грешка");
@@ -905,6 +905,10 @@ export default function AdminDashboardClient({
                   <input type="number" step="0.01" min="0" value={newPromo.minOrder} onChange={e => setNewPromo(p => ({ ...p, minOrder: e.target.value }))} placeholder="по желание" className="w-full px-3 py-2 text-sm rounded-none" />
                 </div>
                 <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Валиден от</label>
+                  <input type="date" value={newPromo.startsAt} onChange={e => setNewPromo(p => ({ ...p, startsAt: e.target.value }))} className="w-full px-3 py-2 text-sm rounded-none" />
+                </div>
+                <div>
                   <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Валиден до</label>
                   <input type="date" value={newPromo.expiresAt} onChange={e => setNewPromo(p => ({ ...p, expiresAt: e.target.value }))} className="w-full px-3 py-2 text-sm rounded-none" />
                 </div>
@@ -912,7 +916,17 @@ export default function AdminDashboardClient({
                   <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Лимит употреби</label>
                   <input type="number" min="1" value={newPromo.usageLimit} onChange={e => setNewPromo(p => ({ ...p, usageLimit: e.target.value }))} placeholder="неогр." className="w-full px-3 py-2 text-sm rounded-none" />
                 </div>
+                <div>
+                  <label className="text-xs text-[#C9A84C]/70 tracking-widest uppercase block mb-1.5 font-semibold">Кампания</label>
+                  <select value={newPromo.source} onChange={e => setNewPromo(p => ({ ...p, source: e.target.value }))} className="w-full px-3 py-2 text-sm rounded-none">
+                    <option value="standard">Обикновен код</option>
+                    <option value="quiz">Ароматно пътешествие</option>
+                  </select>
+                </div>
               </div>
+              <p className="text-[#F5ECD7]/25 text-xs mt-3 leading-relaxed">
+                „Ароматно пътешествие" се прилага автоматично на всеки, който завърши въпросника — докато е активен и в срок.
+              </p>
               {promoError && <p className="text-red-400 text-xs mt-3">{promoError}</p>}
               <button type="submit" className="mt-4 flex items-center gap-2 bg-[#C9A84C] text-[#0D0B08] px-4 py-2.5 text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors">
                 <Plus size={14} /> Създай код

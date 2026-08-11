@@ -4,12 +4,12 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
-import { X, ArrowLeft, ArrowRight, Sparkles, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, Sparkles, RotateCcw, Volume2, VolumeX, ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
 import {
   STEPS, FAMILIES, OCCASIONS, SEASONS, VIBES, INTENSITIES, TARGETS,
-  EMPTY_ANSWERS, recommend, decantVariantOf,
+  EMPTY_ANSWERS, recommend, decantVariantOf, PENDING_PROMO_KEY,
   type QuizAnswers, type StepKey, type FamilyKey,
   type Occasion, type Season, type Vibe, type Intensity, type Target,
 } from "@/lib/quiz";
@@ -22,6 +22,7 @@ const FAMILY_ICON: Record<FamilyKey, string> = {
   citrus: "🍋", floral: "🌸", gourmand: "🍯", fruity: "🍑", woody: "🪵",
   spicy: "🌶", fresh: "💧", amber: "🔥", leather: "🖤", musk: "🤍",
 };
+
 
 /** Counts the match percentage up from zero — the small payoff on reveal. */
 function CountUp({ to, delay = 0 }: { to: number; delay?: number }) {
@@ -75,7 +76,7 @@ export default function ScentJourney({
   const t = useTranslations("quiz");
   const tc = useTranslations("cart");
   const locale = useLocale();
-  const { add } = useCart();
+  const { add, addMany, setOpen: setCartOpen } = useCart();
 
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<QuizAnswers>(EMPTY_ANSWERS);
@@ -84,8 +85,18 @@ export default function ScentJourney({
   const [added, setAdded] = useState<string[]>([]);
   const [sound, setSound] = useState(true);
   const [flash, setFlash] = useState(false);
+  const [promo, setPromo] = useState<{ code: string; discountValue: number; discountType: string } | null>(null);
 
   useEffect(() => setSound(!isMuted()), []);
+
+  // Which promo code (if any) is currently running alongside the journey
+  useEffect(() => {
+    if (!open || promo) return;
+    fetch("/api/quiz/promo")
+      .then(r => r.json())
+      .then(d => { if (d?.promo) setPromo(d.promo); })
+      .catch(() => {});
+  }, [open, promo]);
 
   /** Sound + haptics + a burst of dust from wherever the click landed. */
   const feedback = useCallback((cue: Parameters<typeof playCue>[0], e?: React.MouseEvent, dust = 14) => {
@@ -104,6 +115,7 @@ export default function ScentJourney({
   // --- anonymous usage tracking (see lib/visitor.ts) ---
   const sessionRef = useRef<string>("");
   const trackedRef = useRef(false);
+  const cartedRef = useRef(false);
 
   const track = useCallback(
     (payload: { completed?: boolean; lastStep?: StepKey; answers?: QuizAnswers; recommended?: unknown[] }) => {
@@ -133,6 +145,7 @@ export default function ScentJourney({
     setAdded([]);
     sessionRef.current = newSessionId();
     trackedRef.current = false;
+    cartedRef.current = false; // a second run should cart its own suggestions
   }, []);
 
   // Start a new tracked session each time the journey is opened
@@ -158,6 +171,41 @@ export default function ScentJourney({
       })),
     });
   }, [finished, results, answers, track]);
+
+  // The three suggestions go straight into the cart, with the campaign code
+  // queued for checkout. Doing it here (not per-card) keeps what the customer
+  // sees and what they will pay for identical.
+  useEffect(() => {
+    if (!finished || results.length === 0 || cartedRef.current) return;
+    cartedRef.current = true;
+
+    addMany(
+      results.map(r => {
+        const p = r.product;
+        const variants = Array.isArray(p.variants) ? p.variants : [];
+        const decant = decantVariantOf(p) ?? variants[0];
+        return {
+          productId: p.id,
+          name: p.name,
+          nameBg: p.nameBg,
+          brand: p.brand,
+          slug: p.slug,
+          image: p.images[0] || "",
+          size: decant?.size ?? p.volume,
+          price: decant?.price ?? p.price,
+          variants,
+        };
+      })
+    );
+    setAdded(results.map(r => r.product.id));
+
+    // Checkout picks this up and applies it without the customer typing it
+    try {
+      if (promo?.code) localStorage.setItem(PENDING_PROMO_KEY, promo.code);
+    } catch {
+      /* ignore */
+    }
+  }, [finished, results, addMany, promo]);
 
   // Lock background scroll while the journey is open
   useEffect(() => {
@@ -517,6 +565,23 @@ export default function ScentJourney({
                 </p>
               </div>
 
+              {/* What we just did on their behalf — stated plainly */}
+              {results.length > 0 && (
+                <div
+                  className="qa-reveal mb-6 border border-[#C9A84C]/45 bg-[#C9A84C]/[0.07] px-4 py-3.5 text-center"
+                  style={{ animationDelay: "0.1s" }}
+                >
+                  <p className="text-[#F5ECD7]/85 text-sm leading-relaxed">
+                    {promo
+                      ? t.rich("results.addedWithPromo", {
+                          code: () => <span className="text-[#C9A84C] font-semibold tracking-wider">{promo.code}</span>,
+                          pct: () => <span className="text-[#C9A84C] font-semibold">{promo.discountValue}%</span>,
+                        })
+                      : t("results.addedPlain")}
+                  </p>
+                </div>
+              )}
+
               {results.length === 0 ? (
                 <p className="text-center text-[#F5ECD7]/40 py-12">{t("results.empty")}</p>
               ) : (
@@ -619,12 +684,24 @@ export default function ScentJourney({
                 </button>
                 <button
                   type="button"
-                  onClick={onClose}
-                  className="flex-1 py-3 bg-[#C9A84C] text-[#0D0B08] text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-colors"
+                  onClick={e => {
+                    feedback("add", e, 20);
+                    onClose();
+                    setCartOpen(true);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#C9A84C] text-[#0D0B08] text-xs font-bold tracking-widest uppercase hover:bg-[#E8D5A3] transition-all active:scale-[0.98] shadow-[0_0_26px_-8px_rgba(201,168,76,0.9)]"
                 >
-                  {t("results.browse")}
+                  <ShoppingBag size={14} /> {t("results.toCart")}
                 </button>
               </div>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="block mx-auto mt-4 text-[#F5ECD7]/30 text-xs tracking-widest uppercase hover:text-[#C9A84C] transition-colors"
+              >
+                {t("results.browse")}
+              </button>
             </div>
           )}
         </div>

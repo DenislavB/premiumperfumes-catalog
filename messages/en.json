@@ -96,7 +96,10 @@
       "match": "match",
       "because": "Because of:",
       "decant": "decant price",
-      "added": "Added ✓",
+      "added": "In cart ✓",
+      "addedWithPromo": "✓ All three are in your cart with code <code></code> for <pct></pct> off.",
+      "addedPlain": "✓ All three are in your cart.",
+      "toCart": "View cart",
       "again": "Try again",
       "browse": "Browse the full catalogue",
       "empty": "We couldn't find a match. Try different answers."

@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
 import { getVisitorId } from "@/lib/visitor";
+import { PENDING_PROMO_KEY } from "@/lib/quiz";
 
 type EcontOffice = { id: string; name: string; city: string; address: string };
 
@@ -46,6 +47,38 @@ export default function CheckoutModal({ onClose }: { onClose: () => void }) {
   const totalDiscount = applied.reduce((s, a) => s + a.discount, 0);
   const finalTotal = Math.max(0, Math.round((total - totalDiscount) * 100) / 100);
   const hasFullSize = items.some(i => i.size !== "Отливка");
+
+  // A code queued by the Scent Journey applies itself, so the customer never
+  // has to copy it. Silent on failure — an expired code just means no discount.
+  const [autoPromoDone, setAutoPromoDone] = useState(false);
+  useEffect(() => {
+    if (autoPromoDone || items.length === 0) return;
+    setAutoPromoDone(true);
+
+    let pending = "";
+    try {
+      pending = localStorage.getItem(PENDING_PROMO_KEY) || "";
+    } catch {
+      return;
+    }
+    if (!pending) return;
+
+    fetch("/api/promocodes/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: pending, total, hasFullSize }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.valid) return;
+        setApplied(prev =>
+          prev.some(a => a.code === data.code)
+            ? prev
+            : [...prev, { code: data.code, source: data.source, discount: data.discount, note: data.note }]
+        );
+      })
+      .catch(() => {});
+  }, [autoPromoDone, items.length, total, hasFullSize]);
 
   const applyPromo = async () => {
     if (!promoInput.trim()) return;

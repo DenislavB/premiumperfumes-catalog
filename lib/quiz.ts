@@ -4,6 +4,9 @@ import type { Product, Variant } from "@/lib/types";
  * Scent families
  * ------------------------------------------------------------------ */
 
+/** Where the journey leaves its promo code for the checkout to pick up. */
+export const PENDING_PROMO_KEY = "pp_pending_promo";
+
 export const FAMILIES = [
   "citrus",
   "floral",
