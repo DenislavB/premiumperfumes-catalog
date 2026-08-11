@@ -170,7 +170,13 @@ export const EMPTY_ANSWERS: QuizAnswers = {
   target: null,
 };
 
-export const STEPS = ["favorite", "families", "occasion", "season", "vibe", "intensity", "target"] as const;
+/**
+ * Click-only questions. A free-text "current favourite" used to open the quiz
+ * but 89% of visitors closed the overlay rather than type, so it was dropped.
+ * The engine still supports matching a favourite (see `findFavourite`) if it is
+ * ever reintroduced somewhere less costly, e.g. after the results.
+ */
+export const STEPS = ["families", "occasion", "season", "vibe", "intensity", "target"] as const;
 export type StepKey = (typeof STEPS)[number];
 
 export const OCCASIONS: Occasion[] = ["day", "night", "work", "special"];

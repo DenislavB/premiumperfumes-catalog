@@ -77,8 +77,8 @@ model QuizSession {
   visitorId   String
   locale      String    @default("bg")
   completed   Boolean   @default(false)
-  lastStep    String    @default("favorite") // furthest question reached
-  favorite    String?                        // free-text "current favourite"
+  lastStep    String    @default("families") // furthest question reached
+  favorite    String?                        // retired free-text question; kept for old rows
   favoriteHit String?                        // catalogue product it matched, if any
   families    Json      @default("[]")       // FamilyKey[]
   occasion    String?

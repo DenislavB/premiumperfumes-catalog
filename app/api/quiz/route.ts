@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
+// "favorite" is retired from the flow but still accepted so historical rows
+// and any in-flight browser sessions keep validating.
 const STEP_KEYS = ["favorite", "families", "occasion", "season", "vibe", "intensity", "target"];
 
 /**
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
       visitorId: String(visitorId).slice(0, 64),
       locale: String(body.locale || "bg").slice(0, 5),
       completed: !!body.completed,
-      lastStep: STEP_KEYS.includes(body.lastStep) ? body.lastStep : "favorite",
+      lastStep: STEP_KEYS.includes(body.lastStep) ? body.lastStep : "families",
       favorite: answers.favorite ? String(answers.favorite).slice(0, 120) : null,
       favoriteHit: body.favoriteHit ? String(body.favoriteHit).slice(0, 160) : null,
       families,

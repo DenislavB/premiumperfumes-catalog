@@ -9,12 +9,12 @@ import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
 import {
   STEPS, FAMILIES, OCCASIONS, SEASONS, VIBES, INTENSITIES, TARGETS,
-  EMPTY_ANSWERS, recommend, decantVariantOf, findFavourite,
+  EMPTY_ANSWERS, recommend, decantVariantOf,
   type QuizAnswers, type StepKey, type FamilyKey,
   type Occasion, type Season, type Vibe, type Intensity, type Target,
 } from "@/lib/quiz";
 import { getVisitorId, newSessionId } from "@/lib/visitor";
-import QuizArt from "./QuizArt";
+import QuizArt, { MixingArt } from "./QuizArt";
 import type { Product } from "@/lib/types";
 
 const FAMILY_ICON: Record<FamilyKey, string> = {
@@ -54,7 +54,7 @@ export default function ScentJourney({
   const trackedRef = useRef(false);
 
   const track = useCallback(
-    (payload: { completed?: boolean; lastStep?: StepKey; answers?: QuizAnswers; recommended?: unknown[]; favoriteHit?: string | null }) => {
+    (payload: { completed?: boolean; lastStep?: StepKey; answers?: QuizAnswers; recommended?: unknown[] }) => {
       if (!sessionRef.current) return;
       const body = JSON.stringify({
         sessionId: sessionRef.current,
@@ -87,19 +87,17 @@ export default function ScentJourney({
   useEffect(() => {
     if (!open) return;
     if (!sessionRef.current) sessionRef.current = newSessionId();
-    track({ lastStep: "favorite", completed: false });
+    track({ lastStep: "families", completed: false });
   }, [open, track]);
 
   // Record the finished journey with the answers and what we suggested
   useEffect(() => {
     if (!finished || results.length === 0 || trackedRef.current) return;
     trackedRef.current = true;
-    const hit = answers.favorite ? findFavourite(products, answers.favorite) : null;
     track({
       completed: true,
       lastStep: "target",
       answers,
-      favoriteHit: hit ? `${hit.brand} ${hit.name}` : null,
       recommended: results.map(r => ({
         id: r.product.id,
         name: r.product.name,
@@ -107,7 +105,7 @@ export default function ScentJourney({
         match: r.match,
       })),
     });
-  }, [finished, results, answers, products, track]);
+  }, [finished, results, answers, track]);
 
   // Lock background scroll while the journey is open
   useEffect(() => {
@@ -143,7 +141,6 @@ export default function ScentJourney({
 
   const canAdvance = (() => {
     switch (step) {
-      case "favorite": return true; // optional — may be skipped
       case "families": return answers.families.length > 0;
       case "occasion": return !!answers.occasion;
       case "season": return !!answers.season;
@@ -234,21 +231,6 @@ export default function ScentJourney({
 
   const renderStep = () => {
     switch (step) {
-      case "favorite":
-        return (
-          <div className="qa-slide">
-            <input
-              autoFocus
-              value={answers.favorite}
-              onChange={e => pick("favorite", e.target.value)}
-              onKeyDown={e => e.key === "Enter" && next()}
-              placeholder={t("steps.favorite.placeholder")}
-              className="w-full px-4 py-3.5 text-base rounded-none text-center"
-            />
-            <p className="text-[#F5ECD7]/30 text-xs text-center mt-3">{t("steps.favorite.hint")}</p>
-          </div>
-        );
-
       case "families":
         return (
           <div className="qa-slide grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -374,9 +356,7 @@ export default function ScentJourney({
           {/* ---------- mixing interstitial ---------- */}
           {revealing && (
             <div className="text-center qa-enter">
-              <div className="h-44 flex items-center justify-center">
-                <QuizArt step="families" />
-              </div>
+              <MixingArt />
               <p className="text-[#C9A84C] text-xs tracking-[0.4em] uppercase mt-6">{t("mixing")}</p>
             </div>
           )}
@@ -426,15 +406,6 @@ export default function ScentJourney({
                 </button>
               </div>
 
-              {step === "favorite" && (
-                <button
-                  type="button"
-                  onClick={() => setStepIndex(i => i + 1)}
-                  className="block mx-auto mt-4 text-[#F5ECD7]/30 text-xs tracking-widest uppercase hover:text-[#C9A84C] transition-colors"
-                >
-                  {t("skip")}
-                </button>
-              )}
             </>
           )}
 
