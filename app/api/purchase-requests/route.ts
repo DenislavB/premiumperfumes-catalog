@@ -68,6 +68,36 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  // If this browser ran the Scent Journey, mark the journey converted when the
+  // order actually contains one of the decants we suggested.
+  try {
+    const visitorId = body.visitorId ? String(body.visitorId).slice(0, 64) : null;
+    if (visitorId) {
+      const orderedIds = new Set(
+        (items as { productId?: string }[]).map(it => it.productId).filter(Boolean) as string[]
+      );
+      if (orderedIds.size > 0) {
+        const journeys = await prisma.quizSession.findMany({
+          where: { visitorId, completed: true, convertedAt: null },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        });
+        for (const j of journeys) {
+          const suggested = Array.isArray(j.recommended) ? (j.recommended as { id: string }[]) : [];
+          if (suggested.some(r => orderedIds.has(r.id))) {
+            await prisma.quizSession.update({
+              where: { id: j.id },
+              data: { requestId: request.id, convertedAt: new Date() },
+            });
+            break; // credit the most recent matching journey only
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Quiz conversion link error:", e);
+  }
+
   // Send confirmation to customer + notification to shop (non-blocking on failure)
   try {
     await sendOrderEmails({

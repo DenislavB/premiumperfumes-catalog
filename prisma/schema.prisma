@@ -70,6 +70,32 @@ model SpinEntry {
   createdAt DateTime @default(now())
 }
 
+/// One run of the Scent Journey quiz. Anonymous: `visitorId` is a random id
+/// kept in the browser, never linked to a name unless the visitor orders.
+model QuizSession {
+  id          String    @id @default(cuid())
+  visitorId   String
+  locale      String    @default("bg")
+  completed   Boolean   @default(false)
+  lastStep    String    @default("favorite") // furthest question reached
+  favorite    String?                        // free-text "current favourite"
+  favoriteHit String?                        // catalogue product it matched, if any
+  families    Json      @default("[]")       // FamilyKey[]
+  occasion    String?
+  season      String?
+  vibe        String?
+  intensity   String?
+  target      String?
+  recommended Json      @default("[]")       // [{ id, name, brand, match }]
+  requestId   String?                        // purchase request that followed
+  convertedAt DateTime?                      // when a recommended decant was ordered
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([visitorId])
+  @@index([createdAt])
+}
+
 model PromoCode {
   id            String    @id @default(cuid())
   code          String    @unique

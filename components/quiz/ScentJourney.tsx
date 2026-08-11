@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,10 +9,11 @@ import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
 import {
   STEPS, FAMILIES, OCCASIONS, SEASONS, VIBES, INTENSITIES, TARGETS,
-  EMPTY_ANSWERS, recommend, decantVariantOf,
+  EMPTY_ANSWERS, recommend, decantVariantOf, findFavourite,
   type QuizAnswers, type StepKey, type FamilyKey,
   type Occasion, type Season, type Vibe, type Intensity, type Target,
 } from "@/lib/quiz";
+import { getVisitorId, newSessionId } from "@/lib/visitor";
 import QuizArt from "./QuizArt";
 import type { Product } from "@/lib/types";
 
@@ -41,12 +42,35 @@ export default function ScentJourney({
   const [revealing, setRevealing] = useState(false);
   const [added, setAdded] = useState<string[]>([]);
 
-  const step: StepKey = STEPS[stepIndex];
   const isLast = stepIndex === STEPS.length - 1;
 
   const results = useMemo(
     () => (finished ? recommend(products, answers, 3) : []),
     [finished, products, answers]
+  );
+
+  // --- anonymous usage tracking (see lib/visitor.ts) ---
+  const sessionRef = useRef<string>("");
+  const trackedRef = useRef(false);
+
+  const track = useCallback(
+    (payload: { completed?: boolean; lastStep?: StepKey; answers?: QuizAnswers; recommended?: unknown[]; favoriteHit?: string | null }) => {
+      if (!sessionRef.current) return;
+      const body = JSON.stringify({
+        sessionId: sessionRef.current,
+        visitorId: getVisitorId(),
+        locale,
+        ...payload,
+      });
+      try {
+        // keepalive so the record still lands if the tab is closing
+        fetch("/api/quiz", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true })
+          .catch(() => {});
+      } catch {
+        /* analytics must never break the journey */
+      }
+    },
+    [locale]
   );
 
   const reset = useCallback(() => {
@@ -55,7 +79,35 @@ export default function ScentJourney({
     setFinished(false);
     setRevealing(false);
     setAdded([]);
+    sessionRef.current = newSessionId();
+    trackedRef.current = false;
   }, []);
+
+  // Start a new tracked session each time the journey is opened
+  useEffect(() => {
+    if (!open) return;
+    if (!sessionRef.current) sessionRef.current = newSessionId();
+    track({ lastStep: "favorite", completed: false });
+  }, [open, track]);
+
+  // Record the finished journey with the answers and what we suggested
+  useEffect(() => {
+    if (!finished || results.length === 0 || trackedRef.current) return;
+    trackedRef.current = true;
+    const hit = answers.favorite ? findFavourite(products, answers.favorite) : null;
+    track({
+      completed: true,
+      lastStep: "target",
+      answers,
+      favoriteHit: hit ? `${hit.brand} ${hit.name}` : null,
+      recommended: results.map(r => ({
+        id: r.product.id,
+        name: r.product.name,
+        brand: r.product.brand,
+        match: r.match,
+      })),
+    });
+  }, [finished, results, answers, products, track]);
 
   // Lock background scroll while the journey is open
   useEffect(() => {
@@ -67,15 +119,25 @@ export default function ScentJourney({
     };
   }, [open]);
 
+  const step: StepKey = STEPS[stepIndex];
+
+  /** Closing before the reveal still records how far they got. */
+  const closeJourney = useCallback(() => {
+    if (!finished && !trackedRef.current) {
+      track({ completed: false, lastStep: step, answers });
+    }
+    onClose();
+  }, [finished, step, answers, track, onClose]);
+
   // Esc closes
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") closeJourney();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, closeJourney]);
 
   if (!open) return null;
 
@@ -299,7 +361,7 @@ export default function ScentJourney({
       </div>
 
       <button
-        onClick={onClose}
+        onClick={closeJourney}
         aria-label={t("close")}
         className="fixed top-4 right-4 z-20 text-[#F5ECD7]/40 hover:text-[#C9A84C] transition-colors p-2"
       >

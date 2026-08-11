@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/lib/cart";
+import { getVisitorId } from "@/lib/visitor";
 
 type EcontOffice = { id: string; name: string; city: string; address: string };
 
@@ -103,6 +104,7 @@ export default function CheckoutModal({ onClose }: { onClose: () => void }) {
           ...form,
           items: items.map(i => ({ productId: i.productId, name: i.name, nameBg: i.nameBg, volume: i.size, price: i.price, qty: i.qty })),
           promoCodes: applied.map(a => a.code),
+          visitorId: getVisitorId(), // links the order back to a Scent Journey, if any
         }),
       });
       if (!res.ok) throw new Error();

@@ -241,7 +241,7 @@ export function decantPriceOf(product: Product): number | null {
 }
 
 /** Loose match of the free-text "current favourite" against the catalogue. */
-function findFavourite(products: Product[], text: string): Product | null {
+export function findFavourite(products: Product[], text: string): Product | null {
   const q = text.trim().toLowerCase();
   if (q.length < 3) return null;
   const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();

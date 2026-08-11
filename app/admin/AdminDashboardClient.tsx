@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
-import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket, Star, Gift, Archive, Send } from "lucide-react";
+import { Package, ShoppingBag, Plus, Pencil, Trash2, LogOut, Phone, Menu, X, MapPin, Mail, Ticket, Star, Gift, Archive, Send, Sparkles } from "lucide-react";
 import ProductFormModal from "./ProductFormModal";
 
 // Format a number as a compact price (no currency, drop trailing .00)
@@ -117,6 +117,91 @@ type SpinEntry = {
   createdAt: string;
 };
 
+type QuizSession = {
+  id: string;
+  visitorId: string;
+  locale: string;
+  completed: boolean;
+  lastStep: string;
+  favorite: string | null;
+  favoriteHit: string | null;
+  families: string[];
+  occasion: string | null;
+  season: string | null;
+  vibe: string | null;
+  intensity: string | null;
+  target: string | null;
+  recommended: { id: string; name: string; brand: string; match: number }[];
+  requestId: string | null;
+  convertedAt: string | null;
+  createdAt: string;
+};
+
+/** Bulgarian labels for the quiz answer keys stored in the database. */
+const QUIZ_LABELS: Record<string, string> = {
+  // scent families
+  citrus: "Цитрусови", floral: "Цветни", gourmand: "Сладки", fruity: "Плодови",
+  woody: "Дървесни", spicy: "Подправки", fresh: "Свежи", amber: "Амброви",
+  leather: "Кожа и тютюн", musk: "Мускусни",
+  // occasion
+  day: "За всеки ден", night: "За вечерта", work: "За работа", special: "Специален повод",
+  // season
+  spring: "Пролет", summer: "Лято", autumn: "Есен", winter: "Зима",
+  // vibe
+  elegant: "Елегантен", seductive: "Съблазнителен", clean: "Свеж и чист",
+  bold: "Забележим", cozy: "Уютен",
+  // intensity
+  subtle: "Дискретна", balanced: "Балансирана", strong: "Силна",
+  // target
+  women: "За жена", men: "За мъж", unisex: "Унисекс",
+  // steps (used by the drop-off panel)
+  favorite: "Любим парфюм", families: "Аромати", occasion: "Повод",
+  season: "Сезон", vibe: "Впечатление", intensity: "Сила", target: "За кого",
+};
+
+/** A labelled bar list for one quiz question. */
+function QuizBreakdown({
+  title, rows, total, multi,
+}: {
+  title: string;
+  rows: [string, number][];
+  total: number;
+  multi?: boolean;
+}) {
+  const max = rows[0]?.[1] || 1;
+  return (
+    <div className="bg-[#161410] border border-[#2A2418] p-4">
+      <div className="flex items-baseline justify-between mb-3">
+        <p className="text-[#C9A84C] text-[10px] tracking-widest uppercase">{title}</p>
+        {multi && <span className="text-[#F5ECD7]/20 text-[10px]">няколко отговора</span>}
+      </div>
+      {rows.length === 0 ? (
+        <p className="text-[#F5ECD7]/20 text-sm py-3">Няма данни.</p>
+      ) : (
+        <div className="flex flex-col gap-2.5">
+          {rows.map(([key, n]) => (
+            <div key={key}>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-[#F5ECD7]/70">{QUIZ_LABELS[key] || key}</span>
+                <span className="text-[#F5ECD7]/40">
+                  {n}
+                  {total > 0 && <span className="text-[#F5ECD7]/20"> · {Math.round((n / total) * 100)}%</span>}
+                </span>
+              </div>
+              <div className="h-1.5 bg-[#0D0B08] overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#C9A84C] to-[#E8D5A3]"
+                  style={{ width: `${(n / max) * 100}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 type Tab = "products" | "requests" | "messages" | "promos" | "spins" | "email";
 
 export default function AdminDashboardClient({
@@ -125,12 +210,14 @@ export default function AdminDashboardClient({
   messages: initialMessages,
   promoCodes: initialPromos,
   spinEntries: initialSpins,
+  quizSessions: initialQuiz,
 }: {
   products: Product[];
   requests: Request[];
   messages: Message[];
   promoCodes: PromoCode[];
   spinEntries: SpinEntry[];
+  quizSessions: QuizSession[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("products");
@@ -139,6 +226,39 @@ export default function AdminDashboardClient({
   const [messages, setMessages] = useState(initialMessages);
   const [promos, setPromos] = useState(initialPromos);
   const [spins] = useState(initialSpins);
+  const [quiz] = useState(initialQuiz);
+
+  /* ---- Scent Journey analytics ---- */
+  const quizStats = useMemo(() => {
+    const started = quiz.length;
+    const done = quiz.filter(q => q.completed);
+    const converted = quiz.filter(q => q.convertedAt);
+
+    const tally = (values: (string | null)[]) => {
+      const m = new Map<string, number>();
+      for (const v of values) if (v) m.set(v, (m.get(v) || 0) + 1);
+      return [...m.entries()].sort((a, b) => b[1] - a[1]);
+    };
+
+    return {
+      started,
+      completed: done.length,
+      completionRate: started ? Math.round((done.length / started) * 100) : 0,
+      converted: converted.length,
+      conversionRate: done.length ? Math.round((converted.length / done.length) * 100) : 0,
+      dropOff: tally(quiz.filter(q => !q.completed).map(q => q.lastStep)),
+      families: tally(done.flatMap(q => (Array.isArray(q.families) ? q.families : []))),
+      occasion: tally(done.map(q => q.occasion)),
+      season: tally(done.map(q => q.season)),
+      vibe: tally(done.map(q => q.vibe)),
+      intensity: tally(done.map(q => q.intensity)),
+      target: tally(done.map(q => q.target)),
+      favourites: tally(done.map(q => q.favorite?.trim() || null)),
+      topSuggested: tally(
+        done.flatMap(q => (Array.isArray(q.recommended) ? q.recommended.map(r => `${r.brand} — ${r.name}`) : []))
+      ).slice(0, 8),
+    };
+  }, [quiz]);
   const [newPromo, setNewPromo] = useState({ code: "", discountType: "percent", discountValue: "", minOrder: "", expiresAt: "", usageLimit: "" });
   const [promoError, setPromoError] = useState("");
   const [showArchived, setShowArchived] = useState(false);
@@ -310,7 +430,7 @@ export default function AdminDashboardClient({
     { key: "requests" as Tab, label: "Заявки", icon: ShoppingBag, badge: newRequests },
     { key: "messages" as Tab, label: "Съобщения", icon: Mail, badge: unreadMessages },
     { key: "promos" as Tab, label: "Промокодове", icon: Ticket },
-    { key: "spins" as Tab, label: "Игра", icon: Gift },
+    { key: "spins" as Tab, label: "Игри", icon: Gift },
     { key: "email" as Tab, label: "Изпрати имейл", icon: Send },
   ];
 
@@ -388,7 +508,7 @@ export default function AdminDashboardClient({
             <Menu size={22} />
           </button>
           <p className="text-[#C9A84C] text-sm tracking-widest uppercase" style={{ fontFamily: "var(--font-playfair)" }}>
-            {tab === "products" ? "Продукти" : tab === "requests" ? "Заявки" : tab === "messages" ? "Съобщения" : tab === "promos" ? "Промокодове" : tab === "spins" ? "Игра" : "Изпрати имейл"}
+            {tab === "products" ? "Продукти" : tab === "requests" ? "Заявки" : tab === "messages" ? "Съобщения" : tab === "promos" ? "Промокодове" : tab === "spins" ? "Игри" : "Изпрати имейл"}
           </p>
           <button
             onClick={() => setShowNewForm(true)}
@@ -861,11 +981,167 @@ export default function AdminDashboardClient({
         {tab === "spins" && (
           <div className="p-4 md:p-8">
             <div className="hidden md:block mb-8">
-              <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Участници в играта</h1>
-              <p className="text-[#F5ECD7]/30 text-sm mt-1">
-                {spins.length} участници · {spins.filter(s => s.marketing).length} съгласни за маркетинг
-              </p>
+              <h1 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>Игри и въпросници</h1>
+              <p className="text-[#F5ECD7]/30 text-sm mt-1">Ароматно пътешествие · архив на колелото</p>
             </div>
+
+            {/* ===== Scent Journey ===== */}
+            <div className="mb-10">
+              <div className="flex items-center gap-3 mb-5">
+                <Sparkles size={17} className="text-[#C9A84C]" />
+                <h2 className="text-lg text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>
+                  Ароматно пътешествие
+                </h2>
+                <div className="flex-1 h-px bg-[#2A2418]" />
+              </div>
+
+              {/* headline numbers */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                {[
+                  { label: "Започнали", value: quizStats.started, hint: "отворили въпросника" },
+                  { label: "Завършили", value: quizStats.completed, hint: `${quizStats.completionRate}% от започналите` },
+                  { label: "Поръчали", value: quizStats.converted, hint: `${quizStats.conversionRate}% от завършилите` },
+                  {
+                    label: "Най-търсено",
+                    value: quizStats.families[0] ? QUIZ_LABELS[quizStats.families[0][0]] || quizStats.families[0][0] : "—",
+                    hint: quizStats.families[0] ? `${quizStats.families[0][1]} пъти` : "няма данни",
+                    small: true,
+                  },
+                ].map(c => (
+                  <div key={c.label} className="bg-[#161410] border border-[#2A2418] p-4">
+                    <p className="text-[#F5ECD7]/30 text-[10px] tracking-widest uppercase mb-2">{c.label}</p>
+                    <p className={`text-[#C9A84C] ${c.small ? "text-lg" : "text-3xl"} font-semibold leading-tight`}>{c.value}</p>
+                    <p className="text-[#F5ECD7]/25 text-xs mt-1">{c.hint}</p>
+                  </div>
+                ))}
+              </div>
+
+              {quizStats.started === 0 ? (
+                <div className="bg-[#161410] border border-[#2A2418] text-center py-14 text-[#F5ECD7]/20">
+                  Още никой не е минал през въпросника.
+                </div>
+              ) : (
+                <>
+                  {/* answer breakdowns */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-6">
+                    <QuizBreakdown title="Предпочитани аромати" rows={quizStats.families} total={quizStats.completed} multi />
+                    <QuizBreakdown title="Кога ще го носят" rows={quizStats.occasion} total={quizStats.completed} />
+                    <QuizBreakdown title="Сезон" rows={quizStats.season} total={quizStats.completed} />
+                    <QuizBreakdown title="Желано впечатление" rows={quizStats.vibe} total={quizStats.completed} />
+                    <QuizBreakdown title="Сила на аромата" rows={quizStats.intensity} total={quizStats.completed} />
+                    <QuizBreakdown title="За кого" rows={quizStats.target} total={quizStats.completed} />
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-6">
+                    {/* most suggested products */}
+                    <div className="bg-[#161410] border border-[#2A2418] p-4">
+                      <p className="text-[#C9A84C] text-[10px] tracking-widest uppercase mb-3">Най-често предлагани</p>
+                      {quizStats.topSuggested.length === 0 ? (
+                        <p className="text-[#F5ECD7]/20 text-sm py-4">Няма данни.</p>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          {quizStats.topSuggested.map(([name, n]) => (
+                            <div key={name} className="flex items-center justify-between gap-3 text-sm">
+                              <span className="text-[#F5ECD7]/70 truncate">{name}</span>
+                              <span className="text-[#C9A84C] flex-shrink-0">{n}×</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* free-text favourites — direct demand signal */}
+                    <div className="bg-[#161410] border border-[#2A2418] p-4">
+                      <p className="text-[#C9A84C] text-[10px] tracking-widest uppercase mb-1">Посочени любими парфюми</p>
+                      <p className="text-[#F5ECD7]/25 text-xs mb-3">Какво търсят клиентите — идеи какво да заредите.</p>
+                      {quizStats.favourites.length === 0 ? (
+                        <p className="text-[#F5ECD7]/20 text-sm py-4">Никой не е попълнил това поле.</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {quizStats.favourites.slice(0, 24).map(([name, n]) => (
+                            <span key={name} className="text-xs px-2 py-1 border border-[#2A2418] text-[#F5ECD7]/60">
+                              {name}{n > 1 && <span className="text-[#C9A84C]"> ×{n}</span>}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* where people give up */}
+                  {quizStats.dropOff.length > 0 && (
+                    <div className="bg-[#161410] border border-[#2A2418] p-4 mb-6">
+                      <p className="text-[#C9A84C] text-[10px] tracking-widest uppercase mb-1">Къде се отказват</p>
+                      <p className="text-[#F5ECD7]/25 text-xs mb-3">Последният въпрос, който са видели преди да затворят.</p>
+                      <div className="flex flex-wrap gap-2">
+                        {quizStats.dropOff.map(([step, n]) => (
+                          <span key={step} className="text-xs px-2.5 py-1.5 border border-[#2A2418] text-[#F5ECD7]/60">
+                            {QUIZ_LABELS[step] || step} <span className="text-[#C9A84C]">{n}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* recent runs */}
+                  <div className="bg-[#161410] border border-[#2A2418] overflow-x-auto">
+                    <table className="w-full min-w-[820px]">
+                      <thead>
+                        <tr className="border-b border-[#2A2418]">
+                          {["Дата", "Статус", "Любим парфюм", "Отговори", "Предложени", "Поръчка"].map(h => (
+                            <th key={h} className="text-left text-xs text-[#F5ECD7]/30 tracking-widest uppercase px-4 py-3 font-normal">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {quiz.slice(0, 60).map(q => (
+                          <tr key={q.id} className="border-b border-[#2A2418]/50 hover:bg-[#1A1612] transition-colors align-top">
+                            <td className="px-4 py-3 text-[#F5ECD7]/30 text-xs whitespace-nowrap">{dateTime(q.createdAt)}</td>
+                            <td className="px-4 py-3 text-xs whitespace-nowrap">
+                              {q.completed
+                                ? <span className="text-emerald-400">Завършен</span>
+                                : <span className="text-[#F5ECD7]/30">Спрял на „{QUIZ_LABELS[q.lastStep] || q.lastStep}"</span>}
+                            </td>
+                            <td className="px-4 py-3 text-[#F5ECD7]/60 text-xs max-w-[160px]">
+                              {q.favorite || "—"}
+                              {q.favoriteHit && <div className="text-[#C9A84C]/60 mt-0.5">≈ {q.favoriteHit}</div>}
+                            </td>
+                            <td className="px-4 py-3 text-[#F5ECD7]/50 text-xs max-w-[240px]">
+                              {[
+                                ...(Array.isArray(q.families) ? q.families : []),
+                                q.occasion, q.season, q.vibe, q.intensity, q.target,
+                              ].filter(Boolean).map(k => QUIZ_LABELS[k as string] || k).join(", ") || "—"}
+                            </td>
+                            <td className="px-4 py-3 text-[#F5ECD7]/50 text-xs max-w-[220px]">
+                              {Array.isArray(q.recommended) && q.recommended.length > 0
+                                ? q.recommended.map(r => <div key={r.id}>{r.brand} — {r.name}</div>)
+                                : "—"}
+                            </td>
+                            <td className="px-4 py-3 text-xs whitespace-nowrap">
+                              {q.convertedAt
+                                ? <span className="text-emerald-400">✓ Да</span>
+                                : <span className="text-[#F5ECD7]/20">—</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* ===== Wheel archive ===== */}
+            <div className="flex items-center gap-3 mb-5">
+              <Gift size={17} className="text-[#F5ECD7]/40" />
+              <h2 className="text-lg text-[#F5ECD7]/70" style={{ fontFamily: "var(--font-playfair)" }}>
+                Колело на късмета (архив)
+              </h2>
+              <div className="flex-1 h-px bg-[#2A2418]" />
+            </div>
+            <p className="text-[#F5ECD7]/30 text-sm mb-4">
+              {spins.length} участници · {spins.filter(s => s.marketing).length} съгласни за маркетинг
+            </p>
 
             <div className="bg-[#161410] border border-[#2A2418] overflow-x-auto">
               <table className="w-full min-w-[640px]">
