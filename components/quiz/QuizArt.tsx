@@ -305,7 +305,6 @@ function RibbonScene() {
 /* ------------------------------------------------------------------ */
 
 const SCENES: Record<StepKey, () => React.ReactElement> = {
-  favorite: BottleScene,
   families: EssenceScene,
   occasion: DayNightScene,
   season: SeasonScene,
@@ -313,6 +312,15 @@ const SCENES: Record<StepKey, () => React.ReactElement> = {
   intensity: SillageScene,
   target: RibbonScene,
 };
+
+/** Shown while the answers are being turned into recommendations. */
+export function MixingArt() {
+  return (
+    <div className="qa-enter h-32 sm:h-40 md:h-44 w-full flex items-center justify-center">
+      <BottleScene />
+    </div>
+  );
+}
 
 export default function QuizArt({ step }: { step: StepKey }) {
   const Scene = SCENES[step];

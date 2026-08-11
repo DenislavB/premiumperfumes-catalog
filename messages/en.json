@@ -15,22 +15,15 @@
   },
   "quiz": {
     "launchTitle": "The Scent Journey",
-    "launchSubtitle": "Answer 7 questions and we'll pick 3 decants matched to your taste.",
+    "launchSubtitle": "6 quick tap-through questions and we'll pick 3 decants matched to your taste.",
     "launchCta": "Begin the journey",
-    "launchMeta": "Takes under a minute",
+    "launchMeta": "Takes under a minute · no typing",
     "close": "Close",
     "back": "Back",
     "next": "Next",
-    "skip": "Skip this question",
     "reveal": "Reveal my scents",
     "mixing": "Composing your profile...",
     "steps": {
-      "favorite": {
-        "title": "What's your favourite perfume?",
-        "subtitle": "If you already love a fragrance, we'll look for something in its world.",
-        "placeholder": "e.g. Dior Sauvage, Lattafa Qimmah...",
-        "hint": "Don't have one? No problem — just skip it."
-      },
       "families": {
         "title": "Which scents draw you in?",
         "subtitle": "Pick everything you like. The more you choose, the sharper the match."
