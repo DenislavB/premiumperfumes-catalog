@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
-import { X, ArrowLeft, ArrowRight, Sparkles, RotateCcw } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, Sparkles, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -14,6 +14,7 @@ import {
   type Occasion, type Season, type Vibe, type Intensity, type Target,
 } from "@/lib/quiz";
 import { getVisitorId, newSessionId } from "@/lib/visitor";
+import { playCue, haptic, goldDust, goldShower, isMuted, setMuted } from "@/lib/feedback";
 import QuizArt, { MixingArt } from "./QuizArt";
 import type { Product } from "@/lib/types";
 
@@ -21,6 +22,46 @@ const FAMILY_ICON: Record<FamilyKey, string> = {
   citrus: "🍋", floral: "🌸", gourmand: "🍯", fruity: "🍑", woody: "🪵",
   spicy: "🌶", fresh: "💧", amber: "🔥", leather: "🖤", musk: "🤍",
 };
+
+/** Counts the match percentage up from zero — the small payoff on reveal. */
+function CountUp({ to, delay = 0 }: { to: number; delay?: number }) {
+  const reduced =
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const [n, setN] = useState(reduced ? to : 0);
+
+  useEffect(() => {
+    if (reduced) {
+      setN(to);
+      return;
+    }
+    const DURATION = 900;
+    let raf = 0;
+    let start = 0;
+
+    const timer = setTimeout(() => {
+      const tick = (t: number) => {
+        if (!start) start = t;
+        const p = Math.min(1, (t - start) / DURATION);
+        // ease-out so it decelerates into the final number
+        setN(Math.round(to * (1 - Math.pow(1 - p, 3))));
+        if (p < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }, delay);
+
+    // rAF is paused while a tab is hidden — make sure the real number still
+    // lands rather than leaving the customer looking at "0%".
+    const safety = setTimeout(() => setN(to), delay + DURATION + 150);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(safety);
+      cancelAnimationFrame(raf);
+    };
+  }, [to, delay, reduced]);
+
+  return <>{n}</>;
+}
 
 export default function ScentJourney({
   products,
@@ -41,6 +82,17 @@ export default function ScentJourney({
   const [finished, setFinished] = useState(false);
   const [revealing, setRevealing] = useState(false);
   const [added, setAdded] = useState<string[]>([]);
+  const [sound, setSound] = useState(true);
+  const [flash, setFlash] = useState(false);
+
+  useEffect(() => setSound(!isMuted()), []);
+
+  /** Sound + haptics + a burst of dust from wherever the click landed. */
+  const feedback = useCallback((cue: Parameters<typeof playCue>[0], e?: React.MouseEvent, dust = 14) => {
+    playCue(cue);
+    haptic(cue === "reveal" ? 18 : 8);
+    if (e) goldDust(e.clientX, e.clientY, dust);
+  }, []);
 
   const isLast = stepIndex === STEPS.length - 1;
 
@@ -150,21 +202,29 @@ export default function ScentJourney({
     }
   })();
 
-  const next = () => {
+  const next = (e?: React.MouseEvent) => {
     if (!canAdvance) return;
     if (isLast) {
+      feedback("reveal", e, 26);
       setRevealing(true);
       // short "mixing your scent" beat before the reveal
       setTimeout(() => {
         setFinished(true);
         setRevealing(false);
+        goldShower();
       }, 1400);
     } else {
+      feedback("advance", e, 16);
+      setFlash(true);
+      setTimeout(() => setFlash(false), 620);
       setStepIndex(i => i + 1);
     }
   };
 
-  const back = () => setStepIndex(i => Math.max(0, i - 1));
+  const back = (e?: React.MouseEvent) => {
+    feedback("back", e, 8);
+    setStepIndex(i => Math.max(0, i - 1));
+  };
 
   /* ---------- option pickers ---------- */
 
@@ -177,6 +237,13 @@ export default function ScentJourney({
       ...a,
       families: a.families.includes(f) ? a.families.filter(x => x !== f) : [...a.families, f],
     }));
+  };
+
+  const toggleSound = () => {
+    const willBeMuted = sound; // it is on right now, so pressing mutes it
+    setMuted(willBeMuted);
+    setSound(!willBeMuted);
+    if (!willBeMuted) playCue("select"); // just switched back on — confirm audibly
   };
 
   const addDecant = (r: (typeof results)[number]) => {
@@ -207,22 +274,30 @@ export default function ScentJourney({
   }) => (
     <button
       type="button"
-      onClick={onClick}
+      onClick={e => {
+        // dust only when picking, a quieter tick when un-picking
+        feedback(active ? "deselect" : "select", e, active ? 0 : 12);
+        onClick();
+      }}
       aria-label={label}
       aria-pressed={active}
-      className={`group relative text-left px-4 py-3.5 border transition-all duration-300 ${
+      className={`group relative text-left px-4 py-3.5 border transition-all duration-300 active:scale-[0.97] ${
         active
           ? "border-[#C9A84C] bg-[#C9A84C]/10 shadow-[0_0_22px_-6px_rgba(201,168,76,0.6)]"
           : "border-[#2A2418] hover:border-[#C9A84C]/50 hover:bg-[#C9A84C]/[0.04]"
       }`}
     >
       <span className="flex items-center gap-3">
-        {icon && <span className="text-xl leading-none">{icon}</span>}
+        {icon && (
+          <span className={`text-xl leading-none transition-transform duration-300 ${active ? "scale-110" : "group-hover:scale-105"}`}>
+            {icon}
+          </span>
+        )}
         <span className="flex-1 min-w-0">
           <span className={`block text-sm ${active ? "text-[#C9A84C]" : "text-[#F5ECD7]/85"}`}>{label}</span>
           {hint && <span className="block text-[#F5ECD7]/35 text-xs mt-0.5 leading-snug">{hint}</span>}
         </span>
-        {active && <span className="text-[#C9A84C] text-sm">✓</span>}
+        {active && <span className="qa-pop text-[#C9A84C] text-sm">✓</span>}
       </span>
     </button>
   );
@@ -337,18 +412,28 @@ export default function ScentJourney({
       {/* progress */}
       <div className="fixed top-0 left-0 right-0 h-[2px] bg-[#2A2418] z-10">
         <div
-          className="h-full bg-gradient-to-r from-[#C9A84C] to-[#E8D5A3] transition-all duration-700 ease-out"
+          className={`h-full bg-gradient-to-r from-[#C9A84C] to-[#E8D5A3] transition-all duration-700 ease-out ${flash ? "qa-progress-flash" : ""}`}
           style={{ width: `${progress}%` }}
         />
       </div>
 
-      <button
-        onClick={closeJourney}
-        aria-label={t("close")}
-        className="fixed top-4 right-4 z-20 text-[#F5ECD7]/40 hover:text-[#C9A84C] transition-colors p-2"
-      >
-        <X size={22} />
-      </button>
+      <div className="fixed top-4 right-4 z-20 flex items-center gap-1">
+        <button
+          onClick={toggleSound}
+          aria-label={sound ? "Изключи звука" : "Включи звука"}
+          title={sound ? "Изключи звука" : "Включи звука"}
+          className="text-[#F5ECD7]/30 hover:text-[#C9A84C] transition-colors p-2"
+        >
+          {sound ? <Volume2 size={18} /> : <VolumeX size={18} />}
+        </button>
+        <button
+          onClick={closeJourney}
+          aria-label={t("close")}
+          className="text-[#F5ECD7]/40 hover:text-[#C9A84C] transition-colors p-2"
+        >
+          <X size={22} />
+        </button>
+      </div>
 
       <div className="relative min-h-full flex items-center justify-center px-5 py-16">
         <div className="w-full max-w-2xl">
@@ -391,7 +476,7 @@ export default function ScentJourney({
                   type="button"
                   onClick={back}
                   disabled={stepIndex === 0}
-                  className="flex items-center gap-2 px-4 py-3 border border-[#2A2418] text-[#F5ECD7]/50 text-xs tracking-widest uppercase transition-colors hover:border-[#F5ECD7]/25 disabled:opacity-25 disabled:cursor-not-allowed"
+                  className="flex items-center gap-2 px-4 py-3 border border-[#2A2418] text-[#F5ECD7]/50 text-xs tracking-widest uppercase transition-all hover:border-[#F5ECD7]/25 active:scale-[0.97] disabled:opacity-25 disabled:cursor-not-allowed"
                 >
                   <ArrowLeft size={14} /> {t("back")}
                 </button>
@@ -400,9 +485,12 @@ export default function ScentJourney({
                   type="button"
                   onClick={next}
                   disabled={!canAdvance}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#C9A84C] text-[#0D0B08] text-xs font-bold tracking-widest uppercase transition-all hover:bg-[#E8D5A3] disabled:opacity-25 disabled:cursor-not-allowed"
+                  className={`group flex-1 flex items-center justify-center gap-2 py-3 bg-[#C9A84C] text-[#0D0B08] text-xs font-bold tracking-widest uppercase transition-all hover:bg-[#E8D5A3] active:scale-[0.98] disabled:opacity-25 disabled:cursor-not-allowed ${
+                    canAdvance ? "shadow-[0_0_26px_-8px_rgba(201,168,76,0.9)]" : ""
+                  }`}
                 >
-                  {isLast ? t("reveal") : t("next")} <ArrowRight size={14} />
+                  {isLast ? t("reveal") : t("next")}
+                  <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
                 </button>
               </div>
 
@@ -436,7 +524,9 @@ export default function ScentJourney({
                   {results.map((r, i) => (
                     <div
                       key={r.product.id}
-                      className="qa-reveal relative flex gap-4 p-4 bg-[#161410] border border-[#2A2418] hover:border-[#C9A84C]/40 transition-colors"
+                      className={`qa-reveal relative flex gap-4 p-4 bg-[#161410] border transition-colors ${
+                        i === 0 ? "border-[#C9A84C]/50 qa-halo" : "border-[#2A2418] hover:border-[#C9A84C]/40"
+                      }`}
                       style={{ animationDelay: `${i * 0.22}s` }}
                     >
                       {/* rank */}
@@ -469,7 +559,7 @@ export default function ScentJourney({
                           </p>
                           <span className="relative overflow-hidden flex-shrink-0 border border-[#C9A84C]/40 text-[#C9A84C] text-[10px] tracking-wider px-2 py-0.5">
                             <span className="qa-shine absolute inset-0" />
-                            {r.match}% {t("results.match")}
+                            <CountUp to={r.match} delay={i * 220 + 260} />% {t("results.match")}
                           </span>
                         </div>
 
@@ -502,9 +592,13 @@ export default function ScentJourney({
                           </span>
                           <button
                             type="button"
-                            onClick={() => addDecant(r)}
+                            onClick={e => {
+                              if (added.includes(r.product.id)) return;
+                              feedback("add", e, 18);
+                              addDecant(r);
+                            }}
                             disabled={added.includes(r.product.id)}
-                            className="ml-auto text-[10px] tracking-widest uppercase px-3 py-2 border border-[#C9A84C]/50 text-[#C9A84C] hover:bg-[#C9A84C] hover:text-[#0D0B08] transition-all disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#C9A84C]"
+                            className="ml-auto text-[10px] tracking-widest uppercase px-3 py-2 border border-[#C9A84C]/50 text-[#C9A84C] hover:bg-[#C9A84C] hover:text-[#0D0B08] transition-all active:scale-95 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[#C9A84C]"
                           >
                             {added.includes(r.product.id) ? t("results.added") : tc("addToCart")}
                           </button>
