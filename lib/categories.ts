@@ -29,7 +29,7 @@ export const CATEGORY_COPY: Record<"bg" | "en", Record<CategoryKey, Copy>> = {
       title: "Арабски парфюми — оригинални, с отливки",
       heading: "Арабски парфюми",
       description:
-        "Оригинални арабски парфюми — Lattafa, Armaf, Afnan, Maison Alhambra. Пробвай като отливка, преди да купиш флакон. Доставка в цяла България за 1–3 дни.",
+        "Оригинални арабски парфюми — Lattafa, Armaf, French Avenue, Hamidi. Пробвай като отливка, преди да купиш флакон. Доставка в цяла България за 1–3 дни.",
       intro:
         "Арабските парфюми са известни с плътността и дълготрайността си — уд, амбра, шафран и роза, направени да останат върху кожата с часове. Всеки аромат тук може да се поръча и като отливка, за да го изживееш, преди да се обвържеш с цял флакон.",
     },
@@ -37,7 +37,7 @@ export const CATEGORY_COPY: Record<"bg" | "en", Record<CategoryKey, Copy>> = {
       title: "Дизайнерски парфюми — отливки от оригинални флакони",
       heading: "Дизайнерски парфюми — отливки",
       description:
-        "Отливки от оригинални дизайнерски парфюми — Dior, Versace, Burberry, Prada и още. Изпробвай любимия си аромат, без да плащаш за цял флакон.",
+        "Отливки от оригинални дизайнерски парфюми — Versace, Prada, Valentino, Armani, Burberry и още. Изпробвай любимия си аромат, без да плащаш за цял флакон.",
       intro:
         "Отливка е малко количество от оригиналния парфюм, прелято в отделно шишенце. Получаваш същия аромат от същия флакон, но на част от цената — идеално, за да провериш как стои върху твоята кожа, преди да инвестираш.",
     },
@@ -55,7 +55,7 @@ export const CATEGORY_COPY: Record<"bg" | "en", Record<CategoryKey, Copy>> = {
       title: "Arabian Perfumes — original, with decants",
       heading: "Arabian Perfumes",
       description:
-        "Original Arabian perfumes — Lattafa, Armaf, Afnan, Maison Alhambra. Try a decant before committing to a bottle. Delivery across Bulgaria in 1–3 days.",
+        "Original Arabian perfumes — Lattafa, Armaf, French Avenue, Hamidi. Try a decant before committing to a bottle. Delivery across Bulgaria in 1–3 days.",
       intro:
         "Arabian perfumes are known for their depth and longevity — oud, amber, saffron and rose, built to last on skin for hours. Every fragrance here can also be ordered as a decant, so you can live with it before committing to a full bottle.",
     },
@@ -63,7 +63,7 @@ export const CATEGORY_COPY: Record<"bg" | "en", Record<CategoryKey, Copy>> = {
       title: "Designer Perfume Decants — from original bottles",
       heading: "Designer Perfumes — Decants",
       description:
-        "Decants of original designer perfumes — Dior, Versace, Burberry, Prada and more. Try your favourite scent without paying for a full bottle.",
+        "Decants of original designer perfumes — Versace, Prada, Valentino, Armani, Burberry and more. Try your favourite scent without paying for a full bottle.",
       intro:
         "A decant is a small amount of the original perfume, transferred into its own vial. Same fragrance, same bottle, a fraction of the price — the sensible way to see how a scent behaves on your skin before investing.",
     },
