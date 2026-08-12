@@ -133,7 +133,6 @@ export default function CatalogClient({ products, locale }: { products: Product[
             <Sparkles size={15} />
             {t("quiz.launchCta")}
           </button>
-          <p className="text-[#F5ECD7]/25 text-xs mt-4 tracking-wider">{t("quiz.launchMeta")}</p>
         </div>
       </section>
 
