@@ -3,6 +3,31 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
+/**
+ * Slugs of everything currently in the catalogue, read at build time.
+ *
+ * Needed because the old platform and this site both use /product/<slug>. A
+ * locale-less URL for a product we still sell must reach that product, not the
+ * homepage — so the real slugs get their own redirect ahead of the catch-all.
+ *
+ * Falls back to an empty list if the database is unreachable during the build;
+ * the catch-all still keeps those URLs off a 404.
+ */
+async function currentProductSlugs(): Promise<string[]> {
+  if (!process.env.DATABASE_URL) return [];
+  try {
+    const { PrismaClient } = await import("@prisma/client");
+    const { PrismaPg } = await import("@prisma/adapter-pg");
+    const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+    const prisma = new PrismaClient({ adapter });
+    const rows = await prisma.product.findMany({ select: { slug: true } });
+    await prisma.$disconnect();
+    return rows.map((r: { slug: string }) => r.slug);
+  } catch {
+    return [];
+  }
+}
+
 const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
@@ -42,11 +67,19 @@ const nextConfig: NextConfig = {
     const oldPrefixes = ["product", "vendor", "category", "selection", "auth", "page", "blog"];
     const oldExact = ["/vendors", "/contacts", "/blog", "/cdn-cgi/l/email-protection"];
 
+    const liveSlugs = await currentProductSlugs();
+
     return [
       // Specific rules must come first — the catch-all below would swallow them.
       ...oldProductPages.map(([from, to]) => ({
         source: `/product/${from}`,
         destination: `/bg/product/${to}`,
+        permanent: true,
+      })),
+      // A product we still sell, reached without a locale prefix.
+      ...liveSlugs.map((slug) => ({
+        source: `/product/${slug}`,
+        destination: `/bg/product/${slug}`,
         permanent: true,
       })),
       ...oldPrefixes.map((path) => ({
