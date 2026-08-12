@@ -3,10 +3,12 @@
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { COMPANY } from "@/lib/legalContent";
+import { CATEGORY_SLUGS, CATEGORY_COPY, CATEGORIES } from "@/lib/categories";
 
 export default function Footer() {
   const t = useTranslations("footer");
   const locale = useLocale();
+  const categoryCopy = CATEGORY_COPY[locale === "en" ? "en" : "bg"];
 
   const legalLinks = [
     { href: `/${locale}/privacy`, bg: "Политика за поверителност", en: "Privacy Policy" },
@@ -18,7 +20,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-[#2A2418] py-12 px-6">
       <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="text-center md:text-left">
             <p className="text-[#C9A84C] tracking-widest text-sm uppercase font-medium" style={{ fontFamily: "var(--font-playfair)" }}>
@@ -28,6 +30,19 @@ export default function Footer() {
             <p className="text-[#F5ECD7]/30 text-xs mt-3 leading-relaxed">
               {locale === "bg" ? COMPANY.store : COMPANY.storeEn}
             </p>
+          </div>
+
+          {/* Categories — the crawlable path into each landing page */}
+          <div className="text-center md:text-left flex flex-col gap-2">
+            {CATEGORIES.map(key => (
+              <Link
+                key={key}
+                href={`/${locale}/category/${CATEGORY_SLUGS[key]}`}
+                className="text-xs text-[#F5ECD7]/40 hover:text-[#C9A84C] tracking-widest uppercase transition-colors"
+              >
+                {categoryCopy[key].heading}
+              </Link>
+            ))}
           </div>
 
           {/* Navigation */}

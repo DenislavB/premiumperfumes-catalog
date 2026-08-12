@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import ProductDetailClient from "./ProductDetailClient";
+import { CATEGORY_SLUGS, CATEGORY_COPY, type CategoryKey } from "@/lib/categories";
 
 const BASE = "https://premiumperfumes.bg";
 
@@ -38,6 +39,8 @@ export async function generateMetadata({
       },
     },
     openGraph: {
+      // Next's metadata types don't allow og:type "product"; the Product JSON-LD
+      // below is what Google actually reads for rich results anyway.
       type: "website",
       title,
       description: desc,
@@ -55,6 +58,26 @@ export default async function ProductPage({
   const { locale, slug } = await params;
   const product = await prisma.product.findUnique({ where: { slug } });
   if (!product) notFound();
+
+  const bg = locale !== "en";
+  const categoryKey = (product.category || "arabian") as CategoryKey;
+  const categorySlug = CATEGORY_SLUGS[categoryKey] ?? CATEGORY_SLUGS.arabian;
+  const categoryName = CATEGORY_COPY[bg ? "bg" : "en"][categoryKey]?.heading ?? "";
+
+  // Related products keep each page from being a dead end for crawlers and
+  // give the visitor somewhere to go other than back.
+  const rawRelated = await prisma.product.findMany({
+    where: { category: categoryKey, available: true, NOT: { id: product.id } },
+    orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+    take: 8,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const related = rawRelated.map((p: any) => ({
+    ...p,
+    variants: Array.isArray(p.variants) ? p.variants : [],
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+  }));
 
   const serialized = {
     ...product,
@@ -83,11 +106,29 @@ export default async function ProductPage({
     },
   };
 
+  const breadcrumbs = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: bg ? "Начало" : "Home", item: `${BASE}/${locale}` },
+      { "@type": "ListItem", position: 2, name: categoryName, item: `${BASE}/${locale}/category/${categorySlug}` },
+      { "@type": "ListItem", position: 3, name: product.name, item: `${BASE}/${locale}/product/${slug}` },
+    ],
+  };
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <ProductDetailClient product={serialized as any} locale={locale} />
+      <ProductDetailClient
+        product={serialized as any}
+        locale={locale}
+        categorySlug={categorySlug}
+        categoryName={categoryName}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        related={related as any}
+      />
     </>
   );
 }

@@ -7,6 +7,8 @@ import { useState } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
+import ProductCard from "@/components/ProductCard";
+import type { Product as CatalogProduct } from "@/lib/types";
 
 type Product = {
   id: string;
@@ -31,7 +33,19 @@ type Product = {
   available: boolean;
 };
 
-export default function ProductDetailClient({ product, locale }: { product: Product; locale: string }) {
+export default function ProductDetailClient({
+  product,
+  locale,
+  categorySlug,
+  categoryName,
+  related = [],
+}: {
+  product: Product;
+  locale: string;
+  categorySlug?: string;
+  categoryName?: string;
+  related?: CatalogProduct[];
+}) {
   const t = useTranslations();
   const tc = useTranslations("cart");
   const { add } = useCart();
@@ -66,6 +80,23 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
     <>
       <div className="pt-20 md:pt-24 pb-20 px-4 md:px-6 min-h-screen">
         <div className="max-w-6xl mx-auto">
+          {/* Breadcrumb — matches the BreadcrumbList schema on the server page */}
+          <nav aria-label="breadcrumb" className="text-xs text-[#F5ECD7]/35 mb-4 flex flex-wrap items-center gap-x-2">
+            <Link href={`/${locale}`} className="hover:text-[#C9A84C] transition-colors">
+              {locale === "bg" ? "Начало" : "Home"}
+            </Link>
+            {categorySlug && categoryName && (
+              <>
+                <span>/</span>
+                <Link href={`/${locale}/category/${categorySlug}`} className="hover:text-[#C9A84C] transition-colors">
+                  {categoryName}
+                </Link>
+              </>
+            )}
+            <span>/</span>
+            <span className="text-[#F5ECD7]/60">{name}</span>
+          </nav>
+
           <Link
             href={`/${locale}`}
             className="inline-flex items-center gap-2 text-xs text-[#F5ECD7]/40 hover:text-[#C9A84C] tracking-widest uppercase mb-10 transition-colors"
@@ -188,7 +219,7 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
               </button>
 
               <div className="h-px bg-[#2A2418] mb-6" />
-              <h3 className="text-xs text-[#C9A84C] tracking-[0.4em] uppercase mb-4">{t("product.description")}</h3>
+              <h2 className="text-xs text-[#C9A84C] tracking-[0.4em] uppercase mb-4">{t("product.description")}</h2>
               <p className="text-[#F5ECD7]/60 leading-relaxed">{description}</p>
 
               {(product.notes || product.notesBg) && (() => {
@@ -197,9 +228,9 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
                   : (product.notes || product.notesBg);
                 return (
                   <div className="mt-6">
-                    <h3 className="text-xs text-[#C9A84C] tracking-[0.4em] uppercase mb-3">
+                    <h2 className="text-xs text-[#C9A84C] tracking-[0.4em] uppercase mb-3">
                       {locale === "bg" ? "Нотки на аромата" : "Fragrance Notes"}
-                    </h3>
+                    </h2>
                     <div className="flex flex-wrap gap-2">
                       {displayNotes.split(",").map((note, i) => (
                         <span key={i} className="text-xs border border-[#C9A84C]/30 text-[#F5ECD7]/60 px-3 py-1 hover:border-[#C9A84C]/60 transition-colors">
@@ -212,6 +243,31 @@ export default function ProductDetailClient({ product, locale }: { product: Prod
               })()}
             </div>
           </div>
+
+          {/* Related products — internal links out of what was a dead-end page */}
+          {related.length > 0 && (
+            <section className="mt-20 pt-10 border-t border-[#2A2418]">
+              <div className="flex items-center gap-4 mb-8">
+                <h2 className="text-2xl text-[#F5ECD7]" style={{ fontFamily: "var(--font-playfair)" }}>
+                  {locale === "bg" ? "Подобни аромати" : "Similar fragrances"}
+                </h2>
+                <div className="flex-1 h-px bg-gradient-to-r from-[#C9A84C]/40 to-transparent" />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                {related.slice(0, 4).map(p => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+              {categorySlug && categoryName && (
+                <Link
+                  href={`/${locale}/category/${categorySlug}`}
+                  className="inline-block mt-8 border border-[#C9A84C]/50 text-[#C9A84C] px-6 py-3 text-xs tracking-widest uppercase hover:bg-[#C9A84C]/10 transition-colors"
+                >
+                  {locale === "bg" ? `Виж всички: ${categoryName}` : `See all: ${categoryName}`}
+                </Link>
+              )}
+            </section>
+          )}
         </div>
       </div>
     </>

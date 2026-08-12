@@ -63,6 +63,17 @@ const nextConfig: NextConfig = {
       ["damski-parfyum-armaf-le-parfait-azure-100ml", "armaf-le-parfait-azure-100ml"],
     ];
 
+    // The old platform's category URLs map cleanly onto the new landing pages
+    // — including the gender splits, which are all Arabian perfumes. These were
+    // indexed for years, so pointing them at the matching category recovers far
+    // more than dropping them on the homepage would.
+    const oldCategories: [string, string][] = [
+      ["arabski-parfyumi", "arabski-parfyumi"],
+      ["damski-arabski-parfyumi", "arabski-parfyumi"],
+      ["majki-arabski-parfyumi", "arabski-parfyumi"],
+      ["uniseks-arabski-parfyumi", "arabski-parfyumi"],
+    ];
+
     // Everything else from the old platform lands on the homepage.
     const oldPrefixes = ["product", "vendor", "category", "selection", "auth", "page", "blog"];
     const oldExact = ["/vendors", "/contacts", "/blog", "/cdn-cgi/l/email-protection"];
@@ -80,6 +91,11 @@ const nextConfig: NextConfig = {
       ...liveSlugs.map((slug) => ({
         source: `/product/${slug}`,
         destination: `/bg/product/${slug}`,
+        permanent: true,
+      })),
+      ...oldCategories.map(([from, to]) => ({
+        source: `/category/${from}`,
+        destination: `/bg/category/${to}`,
         permanent: true,
       })),
       ...oldPrefixes.map((path) => ({
