@@ -10,8 +10,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const bg = locale === "bg";
   return {
     title: bg
-      ? "Арабски, дизайнерски и нишови парфюми и отливки"
-      : "Arabian, designer and niche perfumes & decants",
+      ? "Дизайнерски, нишови и арабски парфюми и отливки"
+      : "Designer, niche and Arabian perfumes & decants",
     alternates: {
       canonical: `${BASE}/${locale}`,
       languages: {
