@@ -40,7 +40,9 @@ export default function ProductCard({ product }: { product: Product }) {
   };
 
   return (
-    <div className="group relative bg-[#161410] border border-[#2A2418] hover:border-[#C9A84C]/50 transition-all duration-500 overflow-hidden">
+    // h-full + column layout so every card in a row or grid ends at the same
+    // height regardless of how long its name or notes are
+    <div className="group relative flex flex-col h-full bg-[#161410] border border-[#2A2418] hover:border-[#C9A84C]/50 transition-all duration-500 overflow-hidden">
       <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
         {product.inPromotion && product.discountPct && (
           <span className="bg-[#C9A84C] text-[#0D0B08] text-xs font-semibold px-2 py-0.5 tracking-wider">
@@ -79,7 +81,7 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
       </Link>
 
-      <div className="p-4">
+      <div className="flex flex-col flex-1 p-4">
         <p className="text-[#C9A84C] text-xs tracking-widest uppercase mb-1">{product.brand}</p>
         <Link href={`/${locale}/product/${product.slug}`}>
           <h3
@@ -96,7 +98,9 @@ export default function ProductCard({ product }: { product: Product }) {
           </p>
         )}
 
-        <div className="flex items-baseline gap-2 mb-4">
+        {/* mt-auto pins the price and button to the bottom, so they line up
+            across cards whose names and notes take different numbers of lines */}
+        <div className="flex items-baseline gap-2 mb-4 mt-auto pt-2">
           {hasVariants ? (
             <span className="text-[#C9A84C] text-lg font-semibold">
               {locale === "bg" ? "от " : "from "}{formatPrice(minVariantPrice)}
