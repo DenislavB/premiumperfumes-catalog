@@ -15,7 +15,9 @@ const FILTER_KEY = "pp_catalog_filter";
 
 export default function CatalogClient({ products, locale }: { products: Product[]; locale: string }) {
   const t = useTranslations();
-  const [filter, setFilter] = useState<Filter>("arabian");
+  // Designer decants are the category we lead with for a first-time visitor;
+  // a returning one gets whatever they last looked at (restored below).
+  const [filter, setFilter] = useState<Filter>("designer");
   const [quizOpen, setQuizOpen] = useState(false);
 
   /**
