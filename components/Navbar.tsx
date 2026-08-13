@@ -64,7 +64,7 @@ export default function Navbar() {
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-8">
           <Link
-            href={`/${locale}`}
+            href={`/${locale}#catalog`}
             className="text-sm tracking-widest uppercase text-[#F5ECD7]/70 hover:text-[#C9A84C] transition-colors"
           >
             {t("catalog")}
@@ -109,7 +109,7 @@ export default function Navbar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden bg-[#0D0B08] border-t border-[#C9A84C]/20 px-6 py-6 flex flex-col gap-6">
-          {[["catalog", `/${locale}`], ["about", `/${locale}#about`], ["contact", `/${locale}#contact`]].map(
+          {[["catalog", `/${locale}#catalog`], ["about", `/${locale}#about`], ["contact", `/${locale}#contact`]].map(
             ([key, href]) => (
               <Link
                 key={key}

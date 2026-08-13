@@ -22,9 +22,17 @@ body {
 
 ::selection { background: rgba(201, 168, 76, 0.3); color: #F5ECD7; }
 
-/* Hide scrollbars on horizontal scroll rows */
+/* Hide scrollbars (used by the category filter strip) */
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Product rows keep a slim, visible scrollbar — hiding it left the cards past
+   the right edge unreachable, since a mouse wheel scrolls vertically. */
+.row-scroll { scrollbar-width: thin; scrollbar-color: #C9A84C #1A1612; }
+.row-scroll::-webkit-scrollbar { height: 6px; }
+.row-scroll::-webkit-scrollbar-track { background: #1A1612; }
+.row-scroll::-webkit-scrollbar-thumb { background: #C9A84C; border-radius: 3px; }
+.row-scroll::-webkit-scrollbar-thumb:hover { background: #E8D5A3; }
 
 .text-gradient-gold {
   background: linear-gradient(135deg, #C9A84C 0%, #E8D5A3 50%, #C9A84C 100%);

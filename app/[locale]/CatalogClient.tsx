@@ -12,26 +12,23 @@ import type { Product } from "@/lib/types";
 const FILTERS = ["designer", "niche", "arabian"] as const;
 type Filter = typeof FILTERS[number];
 const FILTER_KEY = "pp_catalog_filter";
-const QUIZ_SEEN_KEY = "pp_quiz_seen";
 
 export default function CatalogClient({ products, locale }: { products: Product[]; locale: string }) {
   const t = useTranslations();
   const [filter, setFilter] = useState<Filter>("arabian");
   const [quizOpen, setQuizOpen] = useState(false);
 
-  // Greet first-time visitors with the scent journey (once per session)
-  useEffect(() => {
-    try {
-      if (sessionStorage.getItem(QUIZ_SEEN_KEY)) return;
-      const timer = setTimeout(() => {
-        sessionStorage.setItem(QUIZ_SEEN_KEY, "1");
-        setQuizOpen(true);
-      }, 1600);
-      return () => clearTimeout(timer);
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  /**
+   * The journey no longer opens by itself.
+   *
+   * As a full-screen modal it sat above the header and locked page scroll, so
+   * for the first seconds of every visit the navigation appeared dead and the
+   * page would not move — it read as a broken site rather than an invitation.
+   * It is still one click away from the hero and from its own section below.
+   *
+   * To bring the greeting back, restore the timer that set quizOpen after a
+   * short delay, guarded by a sessionStorage flag so it fires once per visit.
+   */
 
   // Restore the last-viewed category so returning from a product lands in the same section
   useEffect(() => {
