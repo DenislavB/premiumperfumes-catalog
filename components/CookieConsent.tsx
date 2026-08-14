@@ -30,8 +30,14 @@ export default function CookieConsent() {
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[120] p-4 md:p-6">
-      <div className="max-w-4xl mx-auto bg-[#161410] border border-[#C9A84C]/40 shadow-2xl p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4">
+    // The wrapper spans the full width but is only a positioning shell: without
+    // pointer-events-none its transparent padding and side gutters swallow every
+    // click along the bottom of the viewport — including the cart drawer's
+    // checkout button, which sits outside the visible banner on wide screens.
+    // z-index stays below the cart drawer (90), the Scent Journey (100) and the
+    // checkout modal (110) so the banner never covers their bottom buttons.
+    <div className="pointer-events-none fixed bottom-0 left-0 right-0 z-[80] p-4 md:p-6">
+      <div className="pointer-events-auto max-w-4xl mx-auto bg-[#161410] border border-[#C9A84C]/40 shadow-2xl p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4">
         <div className="flex-1">
           <p className="text-[#F5ECD7] text-sm font-medium mb-1" style={{ fontFamily: "var(--font-playfair)" }}>
             {bg ? "Поверителност и бисквитки" : "Privacy & Cookies"}

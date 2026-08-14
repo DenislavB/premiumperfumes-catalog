@@ -140,7 +140,9 @@ export default function CatalogClient({ products, locale }: { products: Product[
       <ProductRow title={t("sections.newArrivals")} products={newArrivals} />
 
       {/* Catalog */}
-      <section id="catalog" className="py-24 px-6">
+      {/* scroll-mt clears the fixed header, which otherwise sits over the
+          heading when the nav links jump to these sections */}
+      <section id="catalog" className="scroll-mt-24 py-24 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <div className="flex items-center justify-center gap-4 mb-5">
@@ -188,7 +190,7 @@ export default function CatalogClient({ products, locale }: { products: Product[
       {/* About */}
       <section
         id="about"
-        className="py-24 px-6 border-t border-[#2A2418]"
+        className="scroll-mt-24 py-24 px-6 border-t border-[#2A2418]"
         style={{ background: "linear-gradient(180deg, #0D0B08 0%, #1A1410 100%)" }}
       >
         <div className="max-w-3xl mx-auto text-center">
@@ -236,7 +238,7 @@ export default function CatalogClient({ products, locale }: { products: Product[
       </section>
 
       {/* Contact */}
-      <section id="contact" className="py-24 px-6 border-t border-[#2A2418]">
+      <section id="contact" className="scroll-mt-24 py-24 px-6 border-t border-[#2A2418]">
         <div className="max-w-xl mx-auto">
           <div className="text-center mb-10">
             <div className="flex items-center justify-center gap-4 mb-6">
